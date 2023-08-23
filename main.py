@@ -1,4 +1,4 @@
-import interactions, requests, generator
+import interactions, requests, generator, os
 from dotenv import dotenv_values
 from interactions import slash_command, SlashContext, Modal, ShortText, Permissions, slash_default_member_permission, listen, ModalContext, Webhook, Button, ButtonStyle, OptionType, slash_option
 from interactions.api.events import Component
@@ -8,6 +8,16 @@ config = dotenv_values(".env.local")
 bot = interactions.Client(token=config["TOKEN"])
 webhook = Webhook.from_url('https://discord.com/api/webhooks/1142216101883826368/gZPal68Idbj3hHU1MFJYm64H8xEli9CuTtuHfAy3NAT6gJ4YKsNMOelllzbWLyagXvRY', bot)
 OTC = int
+
+
+#Information du rcon
+rcon_info = {
+    "server_ip": "ip",
+    "rcon_port": 99999,
+    "rcon_password": "psw"
+}
+
+bot.load_extension("cogs.player")
 
 @listen()
 async def on_ready():

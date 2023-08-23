@@ -1,3 +1,4 @@
 discord-py-interactions @ git+https://github.com/interactions-py/library.git@00ebd1b896f7cc17415cebd04cfc1877a6badbc8
 python-dotenv==1.0.0
 requests==2.27.1
+mcrcon==0.7.0
