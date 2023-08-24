@@ -217,7 +217,7 @@ class Player(Extension):
         try:
             if await self.is_player_online(joueur):
                 with mcrcon.MCRcon(self.rcon_info["server_ip"], self.rcon_info["rcon_password"], self.rcon_info["rcon_port"]) as rcon:
-                    command = f"gamemode {joueur} {gamemode}"
+                    command = f"gamemode {gamemode} {joueur}"
                     response = rcon.command(command)
                     await ctx.send(f"Le joueur `{joueur}` a changé de gamemode: `{gamemode}`.")
             else:
