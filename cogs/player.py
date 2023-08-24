@@ -232,7 +232,80 @@ class Player(Extension):
             {"name": player, "value": player} for player in online_players if player.startswith(string_option_input)
         ]
         await ctx.send(choices=choices)
+    
 
+    # ==================== Clear Inventory ====================
+
+    @slash_command(
+        name="clearinventory",
+        description="Supprime tous les items de l'inventaire du joueur ciblé."
+    )
+    @slash_option(
+        name="joueur",
+        description="Joueur ciblé",
+        required=True,
+        opt_type=OptionType.STRING,
+        autocomplete=True
+    )
+    @slash_default_member_permission(Permissions.MODERATE_MEMBERS)
+    async def clearinventory(self, ctx: SlashContext, joueur: str):
+        try:
+            if await self.is_player_online(joueur):
+                with mcrcon.MCRcon(self.rcon_info["server_ip"], self.rcon_info["rcon_password"], self.rcon_info["rcon_port"]) as rcon:
+                    command = f"clear {joueur}"
+                    response = rcon.command(command)
+                    await ctx.send(f"Le joueur `{joueur}` n'a plus rien dans son inventaire.")
+            else:
+                await ctx.send(f"Le joueur `{joueur}` n'est pas en ligne.")
+        except Exception as e:
+            await ctx.send("Une erreur s'est produite lors du clear de l'inventaire.")
+    @clearinventory.autocomplete("joueur")
+    async def autocomplete_joueur(self, ctx: AutocompleteContext):
+        string_option_input = ctx.input_text
+        online_players = await self.get_online_players()
+        choices = [
+            {"name": player, "value": player} for player in online_players if player.startswith(string_option_input)
+        ]
+        await ctx.send(choices=choices)
+    
+
+    # ==================== Player Location ====================
+
+    @slash_command(
+        name="playerlocation",
+        description="Obtenir la position actuelle d'un joueur."
+    )
+    @slash_option(
+        name="joueur",
+        description="Le joueur dont vous voulez connaître la position",
+        required=True,
+        opt_type=OptionType.STRING,
+        autocomplete=True
+    )
+    @slash_default_member_permission(Permissions.MODERATE_MEMBERS)
+    async def playerlocation(self, ctx: SlashContext, joueur: str):
+        try:
+            if await self.is_player_online(joueur):
+                with mcrcon.MCRcon(self.rcon_info["server_ip"], self.rcon_info["rcon_password"], self.rcon_info["rcon_port"]) as rcon:
+                    command = f"data get entity {joueur} Pos"
+                    response = rcon.command(command)
+                    coords = response.split(", ")
+                    x = round(float(coords[0].split(": ")[1].replace("d", "").strip("[")))
+                    y = round(float(coords[1].replace("d", "")))
+                    z = round(float(coords[2].replace("d", "").strip("]")))
+                    await ctx.send(f"Position actuelle de `{joueur}` : X: `{x}`, Y: `{y}`, Z: `{z}`")
+            else:
+                await ctx.send(f"Le joueur `{joueur}` n'est pas en ligne.")
+        except Exception as e:
+            await ctx.send("Une erreur s'est produite lors de la récupération de la position du joueur.")
+    @playerlocation.autocomplete("joueur")
+    async def autocomplete_joueur(self, ctx: AutocompleteContext):
+        string_option_input = ctx.input_text
+        online_players = await self.get_online_players()
+        choices = [
+            {"name": player, "value": player} for player in online_players if player.startswith(string_option_input)
+        ]
+        await ctx.send(choices=choices)
 
 def setup(bot):
     Player(bot)
