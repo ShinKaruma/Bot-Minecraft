@@ -1,5 +1,5 @@
 import interactions
-from interactions import Extension, slash_command, slash_option, OptionType, SlashContext, Button, ButtonStyle, listen, Permissions, slash_default_member_permission, AutocompleteContext
+from interactions import Extension, slash_command, slash_option, OptionType, SlashContext, Button, ButtonStyle, listen, Permissions, slash_default_member_permission, AutocompleteContext, SlashCommandChoice
 from interactions.api.events import Component
 import mcrcon
 import asyncio
@@ -28,6 +28,8 @@ class Player(Extension):
         online_players = await self.get_online_players()
         return player_name in online_players
 
+    # ==================== PlayerList ====================
+
     @slash_command(
         name="playerlist",
         description="Affiche une liste de joueurs présents sur le serveur"
@@ -43,12 +45,14 @@ class Player(Extension):
                     players_str = "\n".join(players_list)
                     await ctx.send(f"Liste des joueurs en ligne :\n{players_str}")
         except Exception as e:
-            await ctx.send(e)
-            # await ctx.send("Une erreur s'est produite lors de la récupération de la liste des joueurs.")
+            await ctx.send("Une erreur s'est produite lors de la récupération de la liste des joueurs.")
+
+
+    # ==================== Kill ====================
 
     @slash_command(
         name="kill",
-        description="Commande pour tuer un joueur"
+        description="Commande pour tuer un joueur."
     )
     @slash_option(
         name="target",
@@ -76,7 +80,6 @@ class Player(Extension):
         except Exception as e:
             await ctx.send("Une erreur s'est produite lors de la tentative de tuer le joueur.")
     
-    #AutoComplete des joueurs online
     @kill.autocomplete("target")
     async def autocomplete_target(self, ctx: AutocompleteContext):
         string_option_input = ctx.input_text
@@ -86,9 +89,12 @@ class Player(Extension):
         ]
         await ctx.send(choices=choices)
     
+
+    # ==================== Tp joueur vers joueur ====================
+
     @slash_command(
         name="tp_joueur",
-        description="Téléporter joueur vers un autre joueur"
+        description="Téléporter joueur vers un autre joueur."
     )
     @slash_option(
         name="joueur1",
@@ -120,7 +126,6 @@ class Player(Extension):
         except Exception as e:
             await ctx.send("Une erreur s'est produite lors de la tentative de téléportation.")
     
-    #AutoComplete des joueurs online
     @tp_joueur.autocomplete("joueur1")
     async def autocomplete_joueur1(self, ctx: AutocompleteContext):
         string_option_input = ctx.input_text
@@ -140,9 +145,11 @@ class Player(Extension):
         await ctx.send(choices=choices)
 
 
+    # ==================== Tp joueur vers coordonnées ====================
+
     @slash_command(
         name="tp_coord",
-        description="Téléporter joueur vers des coordonnées"
+        description="Téléporter joueur vers des coordonnées."
     )
     @slash_option(
         name="joueur",
@@ -170,7 +177,6 @@ class Player(Extension):
         except Exception as e:
             await ctx.send("Une erreur s'est produite lors de la tentative de téléportation.")
     
-    #AutoComplete des joueurs online
     @tp_coord.autocomplete("joueur")
     async def autocomplete_joueur(self, ctx: AutocompleteContext):
         string_option_input = ctx.input_text
@@ -179,7 +185,53 @@ class Player(Extension):
             {"name": player, "value": player} for player in online_players if player.startswith(string_option_input)
         ]
         await ctx.send(choices=choices)
+    
 
+    # ==================== Gamemode ====================
+    
+    @slash_command(
+        name="gamemode",
+        description="Modifier le gamemode d'un joueur."
+    )
+    @slash_option(
+        name="joueur",
+        description="Joueur ciblé",
+        required=True,
+        opt_type=OptionType.STRING,
+        autocomplete=True
+    )
+    @slash_option(
+        name="gamemode",
+        description="Gamemode ciblé",
+        required=True,
+        opt_type=OptionType.STRING,
+        choices=[
+            SlashCommandChoice(name="Aventure", value="adventure"),
+            SlashCommandChoice(name="Creatif", value="creative"),
+            SlashCommandChoice(name="Spectateur", value="spectator"),
+            SlashCommandChoice(name="Survie", value="survival")
+        ]
+    )
+    @slash_default_member_permission(Permissions.MODERATE_MEMBERS)
+    async def gamemode(self, ctx: SlashContext, joueur: str, gamemode: str):
+        try:
+            if await self.is_player_online(joueur):
+                with mcrcon.MCRcon(self.rcon_info["server_ip"], self.rcon_info["rcon_password"], self.rcon_info["rcon_port"]) as rcon:
+                    command = f"gamemode {joueur} {gamemode}"
+                    response = rcon.command(command)
+                    await ctx.send(f"Le joueur `{joueur}` a changé de gamemode: `{gamemode}`.")
+            else:
+                await ctx.send(f"Le joueur `{joueur}` n'est pas en ligne.")
+        except Exception as e:
+            await ctx.send("Une erreur s'est produite lors de la modification du gamemode.")
+    @gamemode.autocomplete("joueur")
+    async def autocomplete_joueur(self, ctx: AutocompleteContext):
+        string_option_input = ctx.input_text
+        online_players = await self.get_online_players()
+        choices = [
+            {"name": player, "value": player} for player in online_players if player.startswith(string_option_input)
+        ]
+        await ctx.send(choices=choices)
 
 
 def setup(bot):
