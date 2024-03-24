@@ -29,11 +29,11 @@ SET time_zone = "+00:00";
 
 DROP TABLE IF EXISTS `achat`;
 CREATE TABLE IF NOT EXISTS `achat` (
-  `id_serveur_discord` int NOT NULL,
+  `id_serveur_discord` bigint NOT NULL,
   `id_package` int NOT NULL,
   PRIMARY KEY (`id_serveur_discord`,`id_package`),
   KEY `id_package` (`id_package`)
-) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_0900_ai_ci;
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4  ;
 
 -- --------------------------------------------------------
 
@@ -46,7 +46,7 @@ CREATE TABLE IF NOT EXISTS `daily` (
   `ID_Item` varchar(50) NOT NULL,
   `poids` int DEFAULT NULL,
   PRIMARY KEY (`ID_Item`)
-) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_0900_ai_ci;
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4  ;
 
 -- --------------------------------------------------------
 
@@ -58,10 +58,10 @@ DROP TABLE IF EXISTS `daily_premium`;
 CREATE TABLE IF NOT EXISTS `daily_premium` (
   `ID_Item` varchar(50) NOT NULL,
   `poids` int DEFAULT NULL,
-  `id_serveur_discord` int NOT NULL,
+  `id_serveur_discord` bigint NOT NULL,
   PRIMARY KEY (`ID_Item`,`id_serveur_discord`),
   KEY `id_serveur_discord` (`id_serveur_discord`)
-) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_0900_ai_ci;
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4  ;
 
 -- --------------------------------------------------------
 
@@ -74,7 +74,7 @@ CREATE TABLE IF NOT EXISTS `packages` (
   `id_package` int NOT NULL,
   `libelle` varchar(50) DEFAULT NULL,
   PRIMARY KEY (`id_package`)
-) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_0900_ai_ci;
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4  ;
 
 -- --------------------------------------------------------
 
@@ -84,12 +84,12 @@ CREATE TABLE IF NOT EXISTS `packages` (
 
 DROP TABLE IF EXISTS `serveur`;
 CREATE TABLE IF NOT EXISTS `serveur` (
-  `id_serveur_discord` int NOT NULL,
+  `id_serveur_discord` bigint NOT NULL,
   `ip_serveur_minecraft` varchar(15) DEFAULT NULL,
   `pwd_rcon` varchar(50) DEFAULT NULL,
   `port_rcon` int DEFAULT NULL,
   PRIMARY KEY (`id_serveur_discord`)
-) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_0900_ai_ci;
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4  ;
 
 -- --------------------------------------------------------
 
@@ -102,7 +102,7 @@ CREATE TABLE IF NOT EXISTS `shop` (
   `id_item` varchar(50) NOT NULL,
   `prix_item` int DEFAULT NULL,
   PRIMARY KEY (`id_item`)
-) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_0900_ai_ci;
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4  ;
 
 -- --------------------------------------------------------
 
@@ -114,10 +114,10 @@ DROP TABLE IF EXISTS `shop_premium`;
 CREATE TABLE IF NOT EXISTS `shop_premium` (
   `id_item` varchar(50) NOT NULL,
   `prix_item` int DEFAULT NULL,
-  `id_serveur_discord` int NOT NULL,
+  `id_serveur_discord` bigint NOT NULL,
   PRIMARY KEY (`id_item`,`id_serveur_discord`),
   KEY `id_serveur_discord` (`id_serveur_discord`)
-) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_0900_ai_ci;
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4  ;
 
 -- --------------------------------------------------------
 
@@ -127,15 +127,15 @@ CREATE TABLE IF NOT EXISTS `shop_premium` (
 
 DROP TABLE IF EXISTS `user`;
 CREATE TABLE IF NOT EXISTS `user` (
-  `id_user_discord` int NOT NULL,
+  `id_user_discord` bigint NOT NULL,
   `pseudo_minecraft` varchar(50) DEFAULT NULL,
   `date_dernier_daily` date DEFAULT NULL,
   `nb_daily` int DEFAULT NULL,
-  `id_serveur_discord` int NOT NULL,
+  `id_serveur_discord` bigint NOT NULL,
   PRIMARY KEY (`id_user_discord`,`id_serveur_discord`),
   UNIQUE KEY `pseudo_minecraft` (`pseudo_minecraft`),
   KEY `id_serveur_discord` (`id_serveur_discord`)
-) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_0900_ai_ci;
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4  ;
 
 --
 -- Contraintes pour les tables déchargées
