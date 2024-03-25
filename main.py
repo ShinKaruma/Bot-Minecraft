@@ -51,9 +51,7 @@ async def connect(ctx: SlashContext):
 
 		modal_ctx: ModalContext = await ctx.bot.wait_for_modal(formulaireConnection)
 
-		print(modal_ctx.responses)
 		data = modal_ctx.responses
-		print(int(ctx.guild_id))
 		await modal_ctx.send("Vous avez bien lie vos serveurs", ephemeral=True)
 
 		await webhook.send("Le Serveur {} s'est bien ajoute a la liste des clients. Pour contacter le proprietaire : {}".format(ctx.guild.name, ctx.guild.get_owner().username))
@@ -89,13 +87,11 @@ async def link(ctx: SlashContext, pseudo_minecraft: str):
 				)
 
 				rcon = BDD.getRconDiscord(ctx.guild_id)
+				
 				await ctx.send_modal(modal=formulaireLien)
 				OTC = generator.generate()
 
 				rcon.sendOTP(pseudo=pseudo_minecraft, OTP=OTC)
-
-				
-				print(OTC)
 
 				modal_ctx: ModalContext = await ctx.bot.wait_for_modal(formulaireLien)
 

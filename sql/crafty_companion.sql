@@ -86,7 +86,7 @@ DROP TABLE IF EXISTS `serveur`;
 CREATE TABLE IF NOT EXISTS `serveur` (
   `id_serveur_discord` bigint NOT NULL,
   `ip_serveur_minecraft` varchar(15) DEFAULT NULL,
-  `pwd_rcon` varchar(50) DEFAULT NULL,
+  `pwd_rcon` varbinary(50) DEFAULT NULL,
   `port_rcon` int DEFAULT NULL,
   PRIMARY KEY (`id_serveur_discord`)
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4  ;

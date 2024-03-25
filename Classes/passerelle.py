@@ -1,6 +1,8 @@
 import mysql.connector as bdd
 from dotenv import dotenv_values
 from Classes.class_rcon import Rcon
+from Crypto.Cipher import AES
+from Crypto.Util import Counter
 
 
 class Passerelle:
@@ -21,18 +23,22 @@ class Passerelle:
 
         self.cursor.execute(req)
 
-        resultat = self.cursor.fetchone()[0]
+        resultat = self.cursor.fetchone()
 
-        if resultat == 1:
+        if resultat == None:
+            return False
+        elif resultat[0] == 1:
             return True
-        else:
+        elif resultat[0] == 0:
             return False
         
     
     def addDiscordServer(self, id_discord, ip_server, pwd_rcon, port_rcon) -> None:
         req = "INSERT INTO `serveur`(`id_serveur_discord`, `ip_serveur_minecraft`, `pwd_rcon`, `port_rcon`) VALUES (%s,%s,%s,%s)"
 
-        self.cursor.execute(req,(id_discord, ip_server, pwd_rcon, port_rcon))
+        encrypted_pwd_rcon = self.encryptPwd(pwd_rcon, id_discord)
+
+        self.cursor.execute(req,(id_discord, ip_server, encrypted_pwd_rcon, port_rcon))
 
         self.connector.commit()
 
@@ -43,7 +49,9 @@ class Passerelle:
 
         resultat = self.cursor.fetchone()
 
-        return Rcon(resultat[0], resultat[1], resultat[2])
+        decrypted_pwd_rcon = self.decryptPwd(bytes(resultat[1]), id_discord)
+
+        return Rcon(resultat[0], decrypted_pwd_rcon, resultat[2])
 
     def doUserExists(self, id_serveur_discord, id_user_discord) -> bool:
         req = "select if(id_serveur_discord = {0} and id_user_discord = {1}, true, false) as 'result' from user where id_serveur_discord = {0} and id_user_discord = {1}".format(id_serveur_discord, id_user_discord)
@@ -81,4 +89,17 @@ class Passerelle:
         self.cursor.execute(req, (id_user_discord, pseudo_minecraft, id_serveur_discord))
 
         self.connector.commit()
+
+    
+    def encryptPwd(self, plaintext, key:int) -> bytes:
+        ctr = Counter.new(128)
+        cipher = AES.new(key.to_bytes(16, 'big'), AES.MODE_CTR, counter=ctr)
+        ciphertext = cipher.encrypt(plaintext.encode())
+        return ciphertext
+
+    def decryptPwd(self, ciphertext:bytes, key:int) -> str:
+        ctr = Counter.new(128)
+        cipher = AES.new(key.to_bytes(16,'big'), AES.MODE_CTR, counter=ctr)
+        decrypted_data = cipher.decrypt(ciphertext)
+        return decrypted_data.decode()
         
