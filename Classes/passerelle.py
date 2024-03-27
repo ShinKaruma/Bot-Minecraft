@@ -16,90 +16,54 @@ class Passerelle:
          database = self.config["USER"]   
         )
         self.cursor = self.connector.cursor()
-    
+
+    def _execute_query(self, query, params=None):
+        self.cursor.execute(query, params)
+        return self.cursor.fetchone()
 
     def doDiscordExists(self, id_discord) -> bool:
-        req = "select if(id_serveur_discord = {0}, true , false ) as 'result' from serveur WHERE id_serveur_discord = {0}".format(id_discord)
+        query = "SELECT COUNT(*) FROM serveur WHERE id_serveur_discord = %s"
+        result = self._execute_query(query, (id_discord,))
+        return result[0] == 1 if result else False
 
-        self.cursor.execute(req)
-
-        resultat = self.cursor.fetchone()
-
-        if resultat == None:
-            return False
-        elif resultat[0] == 1:
-            return True
-        elif resultat[0] == 0:
-            return False
-        
-    
     def addDiscordServer(self, id_discord, ip_server, pwd_rcon, port_rcon) -> None:
-        req = "INSERT INTO `serveur`(`id_serveur_discord`, `ip_serveur_minecraft`, `pwd_rcon`, `port_rcon`) VALUES (%s,%s,%s,%s)"
-
+        query = "INSERT INTO serveur (id_serveur_discord, ip_serveur_minecraft, pwd_rcon, port_rcon) VALUES (%s, %s, %s, %s)"
         encrypted_pwd_rcon = self.encryptPwd(pwd_rcon, id_discord)
-
-        self.cursor.execute(req,(id_discord, ip_server, encrypted_pwd_rcon, port_rcon))
-
+        self._execute_query(query, (id_discord, ip_server, encrypted_pwd_rcon, port_rcon))
         self.connector.commit()
 
     def getRconDiscord(self, id_discord) -> Rcon:
-        req = "select ip_serveur_minecraft, pwd_rcon, port_rcon from serveur where id_serveur_discord = {0}".format(id_discord)
-
-        self.cursor.execute(req)
-
-        resultat = self.cursor.fetchone()
-
-        decrypted_pwd_rcon = self.decryptPwd(bytes(resultat[1]), id_discord)
-
-        return Rcon(resultat[0], decrypted_pwd_rcon, resultat[2])
+        query = "SELECT ip_serveur_minecraft, pwd_rcon, port_rcon FROM serveur WHERE id_serveur_discord = %s"
+        result = self._execute_query(query, (id_discord,))
+        if result:
+            decrypted_pwd_rcon = self.decryptPwd(result[1], id_discord)
+            return Rcon(result[0], decrypted_pwd_rcon, result[2])
+        else:
+            # Handle case when no record found
+            return None
 
     def doUserExists(self, id_serveur_discord, id_user_discord) -> bool:
-        req = "select if(id_serveur_discord = {0} and id_user_discord = {1}, true, false) as 'result' from user where id_serveur_discord = {0} and id_user_discord = {1}".format(id_serveur_discord, id_user_discord)
+        query = "SELECT COUNT(*) FROM user WHERE id_serveur_discord = %s AND id_user_discord = %s"
+        result = self._execute_query(query, (id_serveur_discord, id_user_discord))
+        return result[0] == 1 if result else False
 
-        self.cursor.execute(req)
-
-        resultat = self.cursor.fetchone()
-
-        if resultat == None:
-            return False
-        elif resultat[0] == 1:
-            return True
-        elif resultat[0] == 0:
-            return False
-        
-    
     def isPlayerLinked(self, id_serveur_discord, pseudo_minecraft) -> bool:
-        req = "select if(id_serveur_discord = {0} and pseudo_minecraft = '{1}', true, false) as 'result' from user where id_serveur_discord = {0} and pseudo_minecraft = '{1}'".format(id_serveur_discord, pseudo_minecraft)
-
-        self.cursor.execute(req)
-
-        resultat = self.cursor.fetchone()
-
-        if resultat == None:
-            return False
-        elif resultat[0] == 1:
-            return True
-        elif resultat[0] == 0:
-            return False
-    
+        query = "SELECT COUNT(*) FROM user WHERE id_serveur_discord = %s AND pseudo_minecraft = %s"
+        result = self._execute_query(query, (id_serveur_discord, pseudo_minecraft))
+        return result[0] == 1 if result else False
 
     def addPlayer(self, id_serveur_discord, id_user_discord, pseudo_minecraft) -> None:
-        req = "insert into user (id_user_discord, pseudo_minecraft, id_serveur_discord) values(%s, %s, %s)"
-
-        self.cursor.execute(req, (id_user_discord, pseudo_minecraft, id_serveur_discord))
-
+        query = "INSERT INTO user (id_user_discord, pseudo_minecraft, id_serveur_discord) VALUES (%s, %s, %s)"
+        self._execute_query(query, (id_user_discord, pseudo_minecraft, id_serveur_discord))
         self.connector.commit()
 
-    
-    def encryptPwd(self, plaintext, key:int) -> bytes:
+    def encryptPwd(self, plaintext, key: int) -> bytes:
         ctr = Counter.new(128)
         cipher = AES.new(key.to_bytes(16, 'big'), AES.MODE_CTR, counter=ctr)
-        ciphertext = cipher.encrypt(plaintext.encode())
-        return ciphertext
+        return cipher.encrypt(plaintext.encode())
 
-    def decryptPwd(self, ciphertext:bytes, key:int) -> str:
+    def decryptPwd(self, ciphertext: bytes, key: int) -> str:
         ctr = Counter.new(128)
-        cipher = AES.new(key.to_bytes(16,'big'), AES.MODE_CTR, counter=ctr)
+        cipher = AES.new(key.to_bytes(16, 'big'), AES.MODE_CTR, counter=ctr)
         decrypted_data = cipher.decrypt(ciphertext)
         return decrypted_data.decode()
-        
