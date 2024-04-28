@@ -13,13 +13,6 @@ OTC = int
 BDD = Passerelle()
 
 
-#Information du rcon
-rcon_info = {
-    "server_ip": "ip",
-    "rcon_port": 99999,
-    "rcon_password": "psw"
-}
-
 bot.load_extension("cogs.player")
 
 @listen()

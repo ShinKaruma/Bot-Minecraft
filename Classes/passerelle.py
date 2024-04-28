@@ -1,6 +1,7 @@
 import mysql.connector as bdd
 from dotenv import dotenv_values
 from random import choices
+from datetime import date
 from Classes.class_rcon import Rcon
 from Crypto.Cipher import AES
 from Crypto.Util import Counter
@@ -38,15 +39,6 @@ class Passerelle:
 
     def getRconDiscord(self, id_discord) -> Rcon:
         ### fonction permettant de créer un objet rcon dépendant d'un serveur discord
-        req = "select ip_serveur_minecraft, pwd_rcon, port_rcon from serveur where id_serveur_discord = {0}".format(id_discord)
-
-        self.cursor.execute(req)
-
-        resultat = self.cursor.fetchone()
-
-        decrypted_pwd_rcon = self.decryptPwd(bytes(resultat[1]), id_discord)
-
-        return Rcon(resultat[0], decrypted_pwd_rcon, resultat[2])
         query = "SELECT ip_serveur_minecraft, pwd_rcon, port_rcon FROM serveur WHERE id_serveur_discord = %s"
         result = self._execute_query(query, (id_discord,))
         if result:
@@ -63,20 +55,7 @@ class Passerelle:
         return result[0] == 1 if result else False
 
     def isPlayerLinked(self, id_serveur_discord, pseudo_minecraft) -> bool:
-        ### fonction de vérification si un joueur a déjà été linké à un serveur discord
-        req = "select if(id_serveur_discord = {0} and pseudo_minecraft = '{1}', true, false) as 'result' from user where id_serveur_discord = {0} and pseudo_minecraft = '{1}'".format(id_serveur_discord, pseudo_minecraft)
-
-        self.cursor.execute(req)
-
-        resultat = self.cursor.fetchone()
-
-        if resultat == None:
-            return False
-        elif resultat[0] == 1:
-            return True
-        elif resultat[0] == 0:
-            return False
-    
+        ### fonction de vérification si un joueur a déjà été linké à un serveur discord   
         query = "SELECT COUNT(*) FROM user WHERE id_serveur_discord = %s AND pseudo_minecraft = %s"
         result = self._execute_query(query, (id_serveur_discord, pseudo_minecraft))
         return result[0] == 1 if result else False
@@ -86,6 +65,17 @@ class Passerelle:
         query = "INSERT INTO user (id_user_discord, pseudo_minecraft, id_serveur_discord) VALUES (%s, %s, %s)"
         self._execute_query(query, (id_user_discord, pseudo_minecraft, id_serveur_discord))
         self.connector.commit()
+
+    def getPlayer(self, id_serveur_discord, id_user_discord) -> str:
+        query = "select pseudo_minecraft from user where id_serveur_discord = %s AND id_user_discord = %s"
+        result = self._execute_query(query, (id_serveur_discord, id_user_discord))
+        return result[0]
+
+    def getPlayerDateDaily(self, id_serveur_discord, id_user_discord) -> date:
+        query = "select date_dernier_daily from user where id_serveur_discord = %s AND id_user_discord = %s"
+        query_result = self._execute_query(query, (id_serveur_discord, id_user_discord))[0]
+        return query_result
+
 
     def encryptPwd(self, plaintext, key: int) -> bytes:
         ### fonction permettant de chiffrer les mots de passes des rcon
@@ -113,7 +103,7 @@ class Passerelle:
             
         return resultat
     
-    def randItemChoice(self, data):
+    def randItemChoice(self, data) -> tuple:
         ### fonction permettant de faire un choix d'item à partir de son poids et qui retourne l'id minecraft de l'item
         poids = list(data.values())
         ids = list(data.keys())
@@ -121,17 +111,33 @@ class Passerelle:
         choix = choices(ids, weights=poids, k=1)
 
         req = "select ID_item from daily where id_libelle = %s"
+        resultat = self._execute_query(req, choix)[0]
 
-        self.cursor.execute(req, (choix))
-
-        resultat = self.cursor.fetchone()
+        return (resultat, choix)
+    
+    def getItemLibelle(self, id_libelle:int) -> str:
+        query = "select libelle from libelle_daily where id_libelle = %s"
+        resultat = self._execute_query(query, id_libelle)[0]
 
         return resultat
 
-    def updatePlayerDate(self, id_user_discord) -> None:
+
+    def updatePlayerDate(self, id_user_discord, id_serveur_discord) -> None:
         ### fonction permettant d'actualiser la date de la dernière utilisation de la commande /daily
-        req = "update user set date_dernier_daily = DATE(NOW()) where id_user_discord = %s"
+        req = "update user set date_dernier_daily = DATE(NOW()) where id_user_discord = %s and id_serveur_discord = %s"
 
-        self.cursor.execute(req, id_user_discord)
+        self._execute_query(req, (id_user_discord, id_serveur_discord))
 
+        self.connector.commit()
+
+    def addNbDaily(self, id_user_discord, id_serveur_discord):
+        req = "select nb_daily from user where id_user_discord = %s and id_serveur_discord = %s"
+        nb_daily = self._execute_query(req, (id_user_discord, id_serveur_discord))[0]
+
+        nb_daily+=1
+
+        query = "update user set nb_daily = %s where id_user_discord = %s and id_serveur_discord = %s"
+
+        self._execute_query(req, (nb_daily, id_user_discord, id_serveur_discord))
+        
         self.connector.commit()

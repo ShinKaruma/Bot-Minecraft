@@ -15,4 +15,4 @@ class Rcon:
     def giveItem(self, pseudo, id_item) -> None:
         ### fonction permettant de donner un objet à un joueur (principalement utilisé par le daily et le shop)
         with MCRcon(self.host, self.pwd, self.port) as mcr:
-            mcr.command("/give {0} {1}".format(pseudo, id_item))
+            mcr.command("/execute as {0} run give {0} {1}".format(pseudo, id_item))

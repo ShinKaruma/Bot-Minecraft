@@ -1,14 +1,13 @@
 -- phpMyAdmin SQL Dump
--- version 5.2.0
--- https://www.phpmyadmin.net/
+-- version 4.5.4.1
+-- http://www.phpmyadmin.net
 --
--- Hôte : 127.0.0.1:3306
--- Généré le : sam. 19 août 2023 à 20:45
--- Version du serveur : 8.0.31
--- Version de PHP : 8.0.26
+-- Client :  localhost
+-- Généré le :  Dim 28 Avril 2024 à 12:31
+-- Version du serveur :  5.7.11
+-- Version de PHP :  7.0.3
 
 SET SQL_MODE = "NO_AUTO_VALUE_ON_ZERO";
-START TRANSACTION;
 SET time_zone = "+00:00";
 
 
@@ -18,7 +17,7 @@ SET time_zone = "+00:00";
 /*!40101 SET NAMES utf8mb4 */;
 
 --
--- Base de données : `crafty_companion`
+-- Base de données :  `crafty_companion`
 --
 
 -- --------------------------------------------------------
@@ -27,13 +26,10 @@ SET time_zone = "+00:00";
 -- Structure de la table `achat`
 --
 
-DROP TABLE IF EXISTS `achat`;
-CREATE TABLE IF NOT EXISTS `achat` (
-  `id_serveur_discord` bigint NOT NULL,
-  `id_package` int NOT NULL,
-  PRIMARY KEY (`id_serveur_discord`,`id_package`),
-  KEY `id_package` (`id_package`)
-) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4  ;
+CREATE TABLE `achat` (
+  `id_serveur_discord` bigint(20) NOT NULL,
+  `id_package` int(11) NOT NULL
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;
 
 -- --------------------------------------------------------
 
@@ -41,12 +37,32 @@ CREATE TABLE IF NOT EXISTS `achat` (
 -- Structure de la table `daily`
 --
 
-DROP TABLE IF EXISTS `daily`;
-CREATE TABLE IF NOT EXISTS `daily` (
+CREATE TABLE `daily` (
+  `id_libelle` int(11) NOT NULL,
   `ID_Item` varchar(50) NOT NULL,
-  `poids` int DEFAULT NULL,
-  PRIMARY KEY (`ID_Item`)
-) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4  ;
+  `poids` int(11) DEFAULT NULL
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;
+
+--
+-- Contenu de la table `daily`
+--
+
+INSERT INTO `daily` (`id_libelle`, `ID_Item`, `poids`) VALUES
+(1, "minecraft:deepslate 64", 40),
+(2, "minecraft:stone 64", 40),
+(3, "minecraft:birch_log 32", 30),
+(4, "minecraft:oak_log 32", 30),
+(5, "minecraft:spruce_log 32", 30),
+(6, "minecraft:potato 16", 20),
+(7, "minecraft:carrot 16", 20),
+(8, "minecraft:gold_ingot 8", 10),
+(9, "minecraft:iron_block 8", 10),
+(10, "minecraft:experience_bottle 16", 15),
+(11, "minecraft:enchanted_golden_apple 1", 6),
+(12, "minecraft:netherite_ingot 1", 1),
+(13, "minecraft:wither_skeleton_skull 1", 8),
+(14, "minecraft:wither_skeleton_skull 2", 5),
+(15, "minecraft:wither_skeleton_skull 3", 3);
 
 -- --------------------------------------------------------
 
@@ -54,14 +70,43 @@ CREATE TABLE IF NOT EXISTS `daily` (
 -- Structure de la table `daily_premium`
 --
 
-DROP TABLE IF EXISTS `daily_premium`;
-CREATE TABLE IF NOT EXISTS `daily_premium` (
+CREATE TABLE `daily_premium` (
   `ID_Item` varchar(50) NOT NULL,
-  `poids` int DEFAULT NULL,
-  `id_serveur_discord` bigint NOT NULL,
-  PRIMARY KEY (`ID_Item`,`id_serveur_discord`),
-  KEY `id_serveur_discord` (`id_serveur_discord`)
-) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4  ;
+  `poids` int(11) DEFAULT NULL,
+  `id_serveur_discord` bigint(20) NOT NULL
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;
+
+-- --------------------------------------------------------
+
+--
+-- Structure de la table `libelle_daily`
+--
+
+CREATE TABLE `libelle_daily` (
+  `id_libelle` int(11) NOT NULL,
+  `libelle` varchar(60) NOT NULL
+) ENGINE=InnoDB DEFAULT CHARSET=latin1;
+
+--
+-- Contenu de la table `libelle_daily`
+--
+
+INSERT INTO `libelle_daily` (`id_libelle`, `libelle`) VALUES
+(1, "64 blocs de deepslate"),
+(2, "64 blocs de stone"),
+(3, "32 bûches de boulot"),
+(4, "32 bûches de chêne"),
+(5, "32 bûches de sapin"),
+(6, "16 pommes de terre"),
+(7, "16 carottes"),
+(8, "8 lingots d'or"),
+(9, "8 blocs de fer"),
+(10, "16 bouteilles d'expérience"),
+(11, "1 pomme d'or enchantée"),
+(12, "1 lingot de netherite"),
+(13, "1 crâne de wither squelette"),
+(14, "2 crânes de wither squelette"),
+(15, "3 crânes de wither squelette");
 
 -- --------------------------------------------------------
 
@@ -69,12 +114,10 @@ CREATE TABLE IF NOT EXISTS `daily_premium` (
 -- Structure de la table `packages`
 --
 
-DROP TABLE IF EXISTS `packages`;
-CREATE TABLE IF NOT EXISTS `packages` (
-  `id_package` int NOT NULL,
-  `libelle` varchar(50) DEFAULT NULL,
-  PRIMARY KEY (`id_package`)
-) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4  ;
+CREATE TABLE `packages` (
+  `id_package` int(11) NOT NULL,
+  `libelle` varchar(50) DEFAULT NULL
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;
 
 -- --------------------------------------------------------
 
@@ -82,14 +125,12 @@ CREATE TABLE IF NOT EXISTS `packages` (
 -- Structure de la table `serveur`
 --
 
-DROP TABLE IF EXISTS `serveur`;
-CREATE TABLE IF NOT EXISTS `serveur` (
-  `id_serveur_discord` bigint NOT NULL,
+CREATE TABLE `serveur` (
+  `id_serveur_discord` bigint(20) NOT NULL,
   `ip_serveur_minecraft` varchar(15) DEFAULT NULL,
   `pwd_rcon` varbinary(50) DEFAULT NULL,
-  `port_rcon` int DEFAULT NULL,
-  PRIMARY KEY (`id_serveur_discord`)
-) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4  ;
+  `port_rcon` int(11) DEFAULT NULL
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;
 
 -- --------------------------------------------------------
 
@@ -97,12 +138,10 @@ CREATE TABLE IF NOT EXISTS `serveur` (
 -- Structure de la table `shop`
 --
 
-DROP TABLE IF EXISTS `shop`;
-CREATE TABLE IF NOT EXISTS `shop` (
+CREATE TABLE `shop` (
   `id_item` varchar(50) NOT NULL,
-  `prix_item` int DEFAULT NULL,
-  PRIMARY KEY (`id_item`)
-) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4  ;
+  `prix_item` int(11) DEFAULT NULL
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;
 
 -- --------------------------------------------------------
 
@@ -110,14 +149,11 @@ CREATE TABLE IF NOT EXISTS `shop` (
 -- Structure de la table `shop_premium`
 --
 
-DROP TABLE IF EXISTS `shop_premium`;
-CREATE TABLE IF NOT EXISTS `shop_premium` (
+CREATE TABLE `shop_premium` (
   `id_item` varchar(50) NOT NULL,
-  `prix_item` int DEFAULT NULL,
-  `id_serveur_discord` bigint NOT NULL,
-  PRIMARY KEY (`id_item`,`id_serveur_discord`),
-  KEY `id_serveur_discord` (`id_serveur_discord`)
-) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4  ;
+  `prix_item` int(11) DEFAULT NULL,
+  `id_serveur_discord` bigint(20) NOT NULL
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;
 
 -- --------------------------------------------------------
 
@@ -125,20 +161,79 @@ CREATE TABLE IF NOT EXISTS `shop_premium` (
 -- Structure de la table `user`
 --
 
-DROP TABLE IF EXISTS `user`;
-CREATE TABLE IF NOT EXISTS `user` (
-  `id_user_discord` bigint NOT NULL,
+CREATE TABLE `user` (
+  `id_user_discord` bigint(20) NOT NULL,
+  `id_serveur_discord` bigint(20) NOT NULL,
   `pseudo_minecraft` varchar(50) DEFAULT NULL,
   `date_dernier_daily` date DEFAULT NULL,
-  `nb_daily` int DEFAULT NULL,
-  `id_serveur_discord` bigint NOT NULL,
-  PRIMARY KEY (`id_user_discord`,`id_serveur_discord`),
-  UNIQUE KEY `pseudo_minecraft` (`pseudo_minecraft`),
-  KEY `id_serveur_discord` (`id_serveur_discord`)
-) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4  ;
+  `nb_daily` int(11) DEFAULT "0",
+  `total_coins` int(11) DEFAULT "0"
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;
 
 --
--- Contraintes pour les tables déchargées
+-- Index pour les tables exportées
+--
+
+--
+-- Index pour la table `achat`
+--
+ALTER TABLE `achat`
+  ADD PRIMARY KEY (`id_serveur_discord`,`id_package`),
+  ADD KEY `id_package` (`id_package`);
+
+--
+-- Index pour la table `daily`
+--
+ALTER TABLE `daily`
+  ADD PRIMARY KEY (`id_libelle`) USING BTREE;
+
+--
+-- Index pour la table `daily_premium`
+--
+ALTER TABLE `daily_premium`
+  ADD PRIMARY KEY (`ID_Item`,`id_serveur_discord`),
+  ADD KEY `id_serveur_discord` (`id_serveur_discord`);
+
+--
+-- Index pour la table `libelle_daily`
+--
+ALTER TABLE `libelle_daily`
+  ADD PRIMARY KEY (`id_libelle`);
+
+--
+-- Index pour la table `packages`
+--
+ALTER TABLE `packages`
+  ADD PRIMARY KEY (`id_package`);
+
+--
+-- Index pour la table `serveur`
+--
+ALTER TABLE `serveur`
+  ADD PRIMARY KEY (`id_serveur_discord`);
+
+--
+-- Index pour la table `shop`
+--
+ALTER TABLE `shop`
+  ADD PRIMARY KEY (`id_item`);
+
+--
+-- Index pour la table `shop_premium`
+--
+ALTER TABLE `shop_premium`
+  ADD PRIMARY KEY (`id_item`,`id_serveur_discord`),
+  ADD KEY `id_serveur_discord` (`id_serveur_discord`);
+
+--
+-- Index pour la table `user`
+--
+ALTER TABLE `user`
+  ADD PRIMARY KEY (`id_user_discord`,`id_serveur_discord`),
+  ADD KEY `id_serveur_discord` (`id_serveur_discord`);
+
+--
+-- Contraintes pour les tables exportées
 --
 
 --
@@ -155,6 +250,12 @@ ALTER TABLE `daily_premium`
   ADD CONSTRAINT `daily_premium_ibfk_1` FOREIGN KEY (`id_serveur_discord`) REFERENCES `serveur` (`id_serveur_discord`);
 
 --
+-- Contraintes pour la table `libelle_daily`
+--
+ALTER TABLE `libelle_daily`
+  ADD CONSTRAINT `fk_daily_libelle` FOREIGN KEY (`id_libelle`) REFERENCES `daily` (`id_libelle`) ON DELETE CASCADE ON UPDATE CASCADE;
+
+--
 -- Contraintes pour la table `shop_premium`
 --
 ALTER TABLE `shop_premium`
@@ -165,7 +266,6 @@ ALTER TABLE `shop_premium`
 --
 ALTER TABLE `user`
   ADD CONSTRAINT `user_ibfk_1` FOREIGN KEY (`id_serveur_discord`) REFERENCES `serveur` (`id_serveur_discord`);
-COMMIT;
 
 /*!40101 SET CHARACTER_SET_CLIENT=@OLD_CHARACTER_SET_CLIENT */;
 /*!40101 SET CHARACTER_SET_RESULTS=@OLD_CHARACTER_SET_RESULTS */;

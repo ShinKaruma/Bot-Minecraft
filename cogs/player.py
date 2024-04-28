@@ -1,6 +1,9 @@
 import interactions
 from interactions import Extension, slash_command, slash_option, OptionType, SlashContext, Button, ButtonStyle, listen, Permissions, slash_default_member_permission, AutocompleteContext, SlashCommandChoice
 from interactions.api.events import Component
+from Classes.passerelle import Passerelle
+from Classes.class_rcon import Rcon
+from datetime import date, timedelta
 import mcrcon
 import asyncio
 
@@ -13,6 +16,8 @@ class Player(Extension):
             "rcon_port": 25575,
             "rcon_password": "azerty1234"
         }
+
+        self.BDD = Passerelle()
 
     async def get_online_players(self):
         try:
@@ -306,6 +311,49 @@ class Player(Extension):
             {"name": player, "value": player} for player in online_players if player.startswith(string_option_input)
         ]
         await ctx.send(choices=choices)
+
+
+
+    @slash_command(
+        name="daily",
+        description="Obtenir la récompense quotidienne"
+    )
+    async def dailyClaim(self, ctx: SlashContext):
+        id_serveur_discord = ctx.guild_id
+        id_user_discord = ctx.author_id
+
+        if self.BDD.doDiscordExists(id_discord=id_serveur_discord) == False:
+            await ctx.send("Le serveur discord sur lequel vous voulez récupérer votre récompense quotidienne n'est lié à aucun serveur minecraft, veuillez vous référer à l'administrateur du serveur", ephemeral=True)
+            return
+
+        if self.BDD.doUserExists(id_serveur_discord=id_serveur_discord, id_user_discord=id_user_discord) == False:
+            await ctx.send("Vous n'avez pas lié de compte minecraft à ce serveur, veuillez commencer par la commande `/link`")
+            return
+        
+        date_dernier_daily = self.BDD.getPlayerDateDaily(id_serveur_discord=id_serveur_discord, id_user_discord=id_user_discord)
+
+        if date_dernier_daily - date.today() == timedelta(days=0):
+            await ctx.send("Vous avez déjà utilisé votre daily pour la journée, revenez demain")
+            return
+        
+        pseudo_minecraft = self.BDD.getPlayer(id_serveur_discord=id_serveur_discord, id_user_discord=id_user_discord)
+        rcon = self.BDD.getRconDiscord(id_serveur_discord)
+        items = self.BDD.getitemsDaily()
+        choix_item = self.BDD.randItemChoice(items)
+        rcon.giveItem(pseudo_minecraft, choix_item[0])
+        libelle_item = self.BDD.getItemLibelle(choix_item[1])
+        self.BDD.updatePlayerDate(id_user_discord=id_user_discord, id_serveur_discord=id_serveur_discord)
+        self.BDD.addNbDaily(id_user_discord=id_user_discord, id_serveur_discord=id_serveur_discord)
+        await ctx.send("Félicitation, vous avez obtenu {} ! Revenez demain pour votre prochaine récompense !".format(libelle_item))
+
+
+
+        
+
+        
+
+
+
 
 def setup(bot):
     Player(bot)
