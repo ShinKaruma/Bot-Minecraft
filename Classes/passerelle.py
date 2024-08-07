@@ -138,6 +138,30 @@ class Passerelle:
 
         query = "update user set nb_daily = %s where id_user_discord = %s and id_serveur_discord = %s"
 
-        self._execute_query(req, (nb_daily, id_user_discord, id_serveur_discord))
+        self._execute_query(query, (nb_daily, id_user_discord, id_serveur_discord))
         
         self.connector.commit()
+    
+    def addCoins(self, id_user_discord, id_serveur_discord, p_nb_coins):
+        req = "select total_coins from user where id_user_discord = %s and id_serveur_discord = %s"
+        nb_coins = self._execute_query(req, (id_user_discord, id_serveur_discord))[0]
+        nb_coins+= p_nb_coins
+
+        query = "update user set total_coins = %s where id_user_discord = %s and id_serveur_discord = %s"
+        self._execute_query(query, (nb_coins, id_user_discord, id_serveur_discord))
+        self.connector.commit()
+
+    
+    def remCoins(self, id_user_discord, id_serveur_discord, p_nb_coins):
+        req = "select total_coins from user where id_user_discord = %s and id_serveur_discord = %s"
+        nb_coins = self._execute_query(req, (id_user_discord, id_serveur_discord))[0]
+        nb_coins-= p_nb_coins
+
+        query = "update user set total_coins = %s where id_user_discord = %s and id_serveur_discord = %s"
+        self._execute_query(query, (nb_coins, id_user_discord, id_serveur_discord))
+        self.connector.commit()
+    
+    def getNbCoins(self, id_user_discord, id_serveur_discord):
+        req = "select total_coins from user where id_user_discord = %s and id_serveur_discord = %s"
+        nb_coins = self._execute_query(req, (id_user_discord, id_serveur_discord))[0]
+        return nb_coins

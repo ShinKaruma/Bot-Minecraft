@@ -14,7 +14,7 @@ class Player(Extension):
         self.rcon_info = {
             "server_ip": "127.0.0.1",
             "rcon_port": 25575,
-            "rcon_password": "azerty1234"
+            "rcon_password": "1234"
         }
 
         self.BDD = Passerelle()
@@ -32,6 +32,7 @@ class Player(Extension):
     async def is_player_online(self, player_name):
         online_players = await self.get_online_players()
         return player_name in online_players
+   
 
     # ==================== PlayerList ====================
 
@@ -331,12 +332,17 @@ class Player(Extension):
             return
         
         date_dernier_daily = self.BDD.getPlayerDateDaily(id_serveur_discord=id_serveur_discord, id_user_discord=id_user_discord)
-
-        if date_dernier_daily - date.today() == timedelta(days=0):
+        
+        if date_dernier_daily != None and date_dernier_daily - date.today() == timedelta(days=0):
             await ctx.send("Vous avez déjà utilisé votre daily pour la journée, revenez demain")
             return
         
         pseudo_minecraft = self.BDD.getPlayer(id_serveur_discord=id_serveur_discord, id_user_discord=id_user_discord)
+
+        if self.is_player_online(pseudo_minecraft) != True:
+            ctx.send("vous n'etes pas connecte au serveur minecraft", ephemeral=True)
+            return
+        
         rcon = self.BDD.getRconDiscord(id_serveur_discord)
         items = self.BDD.getitemsDaily()
         choix_item = self.BDD.randItemChoice(items)
@@ -344,15 +350,48 @@ class Player(Extension):
         libelle_item = self.BDD.getItemLibelle(choix_item[1])
         self.BDD.updatePlayerDate(id_user_discord=id_user_discord, id_serveur_discord=id_serveur_discord)
         self.BDD.addNbDaily(id_user_discord=id_user_discord, id_serveur_discord=id_serveur_discord)
-        await ctx.send("Félicitation, vous avez obtenu {} ! Revenez demain pour votre prochaine récompense !".format(libelle_item))
+        self.BDD.addCoins(id_user_discord, id_serveur_discord, 10)
+        await ctx.send("Félicitation, vous avez obtenu {} et 10 pieces! Revenez demain pour votre prochaine récompense !".format(libelle_item))
 
 
-
+    @slash_command(
+        name="balance",
+        description="Commande pour afficher le nombre de pieces d'un joueur"
+    )
+    @slash_option(
+        name="user",
+        description="l'utilisateur dont tu veux connaitre le nombre de pieces",
+        required=False,
+        opt_type=OptionType.USER
+    )
+    async def getBalance(self, ctx: SlashContext, user: interactions.Member = None):
+        id_serveur_discord = ctx.guild_id
+        id_user_discord = ctx.author_id
         
 
+        if self.BDD.doDiscordExists(id_discord=id_serveur_discord) == False:
+            await ctx.send("Le serveur discord sur lequel vous voulez récupérer votre récompense quotidienne n'est lié à aucun serveur minecraft, veuillez vous référer à l'administrateur du serveur", ephemeral=True)
+            return
+
+        if self.BDD.doUserExists(id_serveur_discord=id_serveur_discord, id_user_discord=id_user_discord) == False:
+            await ctx.send("l'utilisateur pas lié de compte minecraft à ce serveur, veuillez commencer par la commande `/link`")
+            return
+
+        if user != None:
+            if self.BDD.doUserExists(id_serveur_discord=id_serveur_discord, id_user_discord=user.id) == False:
+                await ctx.send("l'utilisateur pas lié de compte minecraft à ce serveur, veuillez commencer par la commande `/link`")
+                return
         
+            params_id_user = user.id
+            user_coins = self.BDD.getNbCoins(params_id_user, id_serveur_discord=id_serveur_discord)
+            await ctx.send("**{}** possede **{}** pieces".format(user.display_name, user_coins))
+            return
+        
+        
+        user_coins = self.BDD.getNbCoins(id_user_discord=id_user_discord, id_serveur_discord=id_serveur_discord)
+        await ctx.send("Vous avez **{}** pieces".format(user_coins))
 
-
+    
 
 
 def setup(bot):
