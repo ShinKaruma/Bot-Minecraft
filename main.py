@@ -1,9 +1,7 @@
-import interactions, requests, generator
+import interactions, generator
 from Classes.passerelle import Passerelle
-from Classes.class_rcon import Rcon
 from dotenv import dotenv_values
 from interactions import slash_command, SlashContext, Modal, ShortText, Permissions, slash_default_member_permission, listen, ModalContext, Webhook, Button, ButtonStyle, OptionType, slash_option
-from interactions.api.events import Component
 
 config = dotenv_values(".env.local")
 
