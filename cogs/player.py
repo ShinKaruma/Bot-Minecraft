@@ -1,23 +1,33 @@
-import interactions
-from interactions import Extension, slash_command, slash_option, OptionType, SlashContext, Button, ButtonStyle, listen, Permissions, slash_default_member_permission, AutocompleteContext, SlashCommandChoice
+import interactions, mcrcon, json
+from interactions import Extension, slash_command, slash_option, OptionType, SlashContext, Button, ButtonStyle, listen, LocalisedName, LocalisedDesc, Permissions, slash_default_member_permission, AutocompleteContext, SlashCommandChoice
 from interactions.api.events import Component
 from Classes.passerelle import Passerelle
 from Classes.class_rcon import Rcon
+from Classes.lang_pack import LocalisedMessages
 from datetime import date, timedelta
-import mcrcon
-import asyncio
+
 
 
 class Player(Extension):
     def __init__(self, bot):
         self.bot = bot
-        self.rcon_info = {
-            "server_ip": "127.0.0.1",
-            "rcon_port": 25575,
-            "rcon_password": "1234"
-        }
-
         self.BDD = Passerelle()
+        self.lang_pack = LocalisedMessages(bot)
+
+    async def do_everything_exists(self, ctx: SlashContext):
+        id_serveur_discord = ctx.guild_id
+        id_user_discord = ctx.author_id
+
+        if self.BDD.doDiscordExists(id_discord=id_serveur_discord) == False:
+            await self.lang_pack.send_message(ctx, "server_not_linked")
+            return False
+
+        if self.BDD.doUserExists(id_serveur_discord=id_serveur_discord, id_user_discord=id_user_discord) == False:
+            await self.lang_pack.send_message(ctx, "user_not_linked")
+            return False
+        
+        else:
+            return True
 
     async def get_online_players(self):
         try:
@@ -33,6 +43,7 @@ class Player(Extension):
         online_players = await self.get_online_players()
         return player_name in online_players
    
+    
 
     # ==================== PlayerList ====================
 
@@ -313,35 +324,35 @@ class Player(Extension):
         ]
         await ctx.send(choices=choices)
 
-
+    # ==================== Daily ====================
 
     @slash_command(
         name="daily",
-        description="Obtenir la récompense quotidienne"
+        description=LocalisedDesc(
+            english_us="Claim your daily reward",
+            french="Obtenir la récompense quotidienne"
+            )
     )
     async def dailyClaim(self, ctx: SlashContext):
         id_serveur_discord = ctx.guild_id
         id_user_discord = ctx.author_id
 
-        if self.BDD.doDiscordExists(id_discord=id_serveur_discord) == False:
-            await ctx.send("Le serveur discord sur lequel vous voulez récupérer votre récompense quotidienne n'est lié à aucun serveur minecraft, veuillez vous référer à l'administrateur du serveur", ephemeral=True)
-            return
-
-        if self.BDD.doUserExists(id_serveur_discord=id_serveur_discord, id_user_discord=id_user_discord) == False:
-            await ctx.send("Vous n'avez pas lié de compte minecraft à ce serveur, veuillez commencer par la commande `/link`")
+        if not await self.do_everything_exists(ctx):
             return
         
         date_dernier_daily = self.BDD.getPlayerDateDaily(id_serveur_discord=id_serveur_discord, id_user_discord=id_user_discord)
         
         if date_dernier_daily != None and date_dernier_daily - date.today() == timedelta(days=0):
-            await ctx.send("Vous avez déjà utilisé votre daily pour la journée, revenez demain")
+
+            self.lang_pack.send_message(ctx, "already_claimed")
             return
-        
+
         pseudo_minecraft = self.BDD.getPlayer(id_serveur_discord=id_serveur_discord, id_user_discord=id_user_discord)
 
-        if self.is_player_online(pseudo_minecraft) != True:
-            ctx.send("vous n'etes pas connecte au serveur minecraft", ephemeral=True)
+        if not self.is_player_online(pseudo_minecraft):
+            self.lang_pack.send_message(ctx, "not_connected")
             return
+
         
         rcon = self.BDD.getRconDiscord(id_serveur_discord)
         items = self.BDD.getitemsDaily()
@@ -351,16 +362,23 @@ class Player(Extension):
         self.BDD.updatePlayerDate(id_user_discord=id_user_discord, id_serveur_discord=id_serveur_discord)
         self.BDD.addNbDaily(id_user_discord=id_user_discord, id_serveur_discord=id_serveur_discord)
         self.BDD.addCoins(id_user_discord, id_serveur_discord, 10)
-        await ctx.send("Félicitation, vous avez obtenu {} et 10 pieces! Revenez demain pour votre prochaine récompense !".format(libelle_item))
+
+        self.lang_pack.send_message(ctx, "reward", item=libelle_item)
 
 
     @slash_command(
         name="balance",
-        description="Commande pour afficher le nombre de pieces d'un joueur"
+        description=LocalisedDesc(
+            english_us="Command to display the number of coins of a player",
+            french="Commande pour afficher le nombre de pieces d'un joueur"
+        )
     )
     @slash_option(
         name="user",
-        description="l'utilisateur dont tu veux connaitre le nombre de pieces",
+        description=LocalisedDesc(
+            english_us="The user whose number of coins you want to know",
+            french="l'utilisateur dont tu veux connaitre le nombre de pieces"
+        ),
         required=False,
         opt_type=OptionType.USER
     )
@@ -369,29 +387,38 @@ class Player(Extension):
         id_user_discord = ctx.author_id
         
 
-        if self.BDD.doDiscordExists(id_discord=id_serveur_discord) == False:
-            await ctx.send("Le serveur discord sur lequel vous voulez récupérer votre récompense quotidienne n'est lié à aucun serveur minecraft, veuillez vous référer à l'administrateur du serveur", ephemeral=True)
-            return
-
-        if self.BDD.doUserExists(id_serveur_discord=id_serveur_discord, id_user_discord=id_user_discord) == False:
-            await ctx.send("l'utilisateur pas lié de compte minecraft à ce serveur, veuillez commencer par la commande `/link`")
+        if not await self.do_everything_exists(ctx):
             return
 
         if user != None:
             if self.BDD.doUserExists(id_serveur_discord=id_serveur_discord, id_user_discord=user.id) == False:
-                await ctx.send("l'utilisateur pas lié de compte minecraft à ce serveur, veuillez commencer par la commande `/link`")
+                self.lang_pack.send_message(ctx, "user_not_linked")
                 return
         
             params_id_user = user.id
             user_coins = self.BDD.getNbCoins(params_id_user, id_serveur_discord=id_serveur_discord)
-            await ctx.send("**{}** possede **{}** pieces".format(user.display_name, user_coins))
+            self.lang_pack.send_message(ctx, "user_balance", user=user.display_name, coins=user_coins)
             return
+            
         
         
         user_coins = self.BDD.getNbCoins(id_user_discord=id_user_discord, id_serveur_discord=id_serveur_discord)
-        await ctx.send("Vous avez **{}** pieces".format(user_coins))
+        self.lang_pack.send_message(ctx, "your_balance", coins=user_coins)
 
     
+
+    @slash_command(
+        name="locale",
+        description="Commande pour afficher la langue locale d'un joueur"
+    )
+    @slash_option(
+        name="user",
+        description="l'utilisateur dont tu veux connaitre la langue locale",
+        required=False,
+        opt_type=OptionType.USER
+    )
+    async def getLocale(self, ctx: SlashContext, user: interactions.Member = None):
+        await ctx.send(ctx.locale)
 
 
 def setup(bot):

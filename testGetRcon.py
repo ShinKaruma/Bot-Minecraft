@@ -1,17 +1,13 @@
-from Classes.passerelle import Passerelle
-from Classes.class_rcon import Rcon
-from dotenv import dotenv_values
+import json
 
 
 
-BDD = Passerelle()
+def get_message( key):
+        locale = "fr"
+        with open('lang.json', 'r', encoding='utf-8') as f:
+            lang_data = json.load(f)
+        return lang_data.get(locale, {}).get(key, lang_data["en-US"].get(key, "Message not found"))
 
 
-BDD.getRconDiscord(id_discord=956195070795730974)
-id_discord=956195070795730974
-
-ResultEncrypt = BDD.encryptPwd("test", id_discord)
-print(ResultEncrypt)
-
-Result = BDD.decryptPwd(ResultEncrypt, id_discord)
-print(Result)
+if __name__ == "__main__":
+      print(get_message("daily")["reward"])

@@ -1,4 +1,5 @@
 from mcrcon import MCRcon
+from Classes.lang_pack import LocalisedMessages
 
 class Rcon:
 
@@ -6,6 +7,8 @@ class Rcon:
         self.host = host
         self.pwd = pwd
         self.port = port
+
+         
     
     def sendOTP(self, pseudo, OTP) -> None:
         ### fonction permettant d'envoyer à un utilisateur l'OTP pour la liaison du compte
