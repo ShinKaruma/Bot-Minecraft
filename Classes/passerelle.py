@@ -3,8 +3,10 @@ from dotenv import dotenv_values
 from random import choices
 from datetime import date
 from Classes.class_rcon import Rcon
+from interactions import Embed, EmbedField
 from Crypto.Cipher import AES
 from Crypto.Util import Counter
+from typing import List
 
 
 class Passerelle:
@@ -115,9 +117,14 @@ class Passerelle:
 
         return (resultat, choix)
     
-    def getItemLibelle(self, id_libelle:int) -> str:
-        query = "select libelle from libelle_daily where id_libelle = %s"
-        resultat = self._execute_query(query, id_libelle)[0]
+    def getItemLibelle(self, id_libelle:int, locale:str) -> str:
+        KnownLocales = ["en-US", "fr"]
+
+        if locale not in KnownLocales:
+            locale = "en-US"
+        query = "select libelle from libelle_daily where id_libelle = %s and locale = %s"
+
+        resultat = self._execute_query(query, (id_libelle, locale))[0]
 
         return resultat
 
@@ -157,6 +164,9 @@ class Passerelle:
         nb_coins = self._execute_query(req, (id_user_discord, id_serveur_discord))[0]
         nb_coins-= p_nb_coins
 
+        if nb_coins < 0:
+            nb_coins = 0
+
         query = "update user set total_coins = %s where id_user_discord = %s and id_serveur_discord = %s"
         self._execute_query(query, (nb_coins, id_user_discord, id_serveur_discord))
         self.connector.commit()
@@ -165,3 +175,33 @@ class Passerelle:
         req = "select total_coins from user where id_user_discord = %s and id_serveur_discord = %s"
         nb_coins = self._execute_query(req, (id_user_discord, id_serveur_discord))[0]
         return nb_coins
+    
+    def getShopItems(self) -> List[Embed]:
+        req = "select id_item, titre, prix_item, item_id from shop"
+        self.cursor.execute(req)
+        result = self.cursor.fetchall()
+        Embeds = []
+        for x in result:
+            Embeds.append(Embed(title="Shop", description="Achetez des items", fields=[EmbedField(name="Item", value=str(x[1])), EmbedField(name="Prix", value=str(x[2]))]))
+        
+        return Embeds
+
+            
+    def getShopitemsPremium(self) -> List[Embed]:
+        req = "select id_item, libelle, prix_item, item_id from shop_premium"
+        self.cursor.execute(req)
+        result = self.cursor.fetchall()
+        Embeds = []
+        for x in result:
+            Embeds.append(Embed(title="Shop Premium", description="Achetez des items premium", fields=[EmbedField(name="Item", value=str(x[1])), EmbedField(name="Prix", value=str(x[2]))]))
+        
+        return Embeds
+    
+    def isServerPremium(self, id_serveur_discord) -> bool:
+        req = "select count(id_serveur_discord) from achat where id_serveur_discord = %s and id_package = 1"
+        result = self._execute_query(req, (id_serveur_discord,))[0]
+        return result == 1 if result else False
+
+
+        
+    

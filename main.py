@@ -12,9 +12,11 @@ bot = interactions.Client(token=config["TOKEN"])
 webhook = Webhook.from_url('https://discord.com/api/webhooks/1142216101883826368/gZPal68Idbj3hHU1MFJYm64H8xEli9CuTtuHfAy3NAT6gJ4YKsNMOelllzbWLyagXvRY', bot)
 OTC = int
 BDD = Passerelle()
-lang = LocalisedMessages(bot)
+lang = LocalisedMessages()
 
 bot.load_extension("cogs.player")
+bot.load_extension("cogs.shop")
+bot.load_extension("interactions.ext.jurigged")
 
 @listen()
 async def on_ready():
@@ -98,13 +100,13 @@ async def link(ctx: SlashContext, pseudo_minecraft: str):
 	await ctx.send_modal(modal=formulaireLien)
 	OTC = generator.generate()
 
-	rcon.sendOTP(pseudo=pseudo_minecraft, OTP=OTC)
+	rcon.sendOTP(ctx, pseudo=pseudo_minecraft, OTP=OTC)
 
 	modal_ctx: ModalContext = await ctx.bot.wait_for_modal(formulaireLien)
 
 
 	if OTC == modal_ctx.responses["OTC_Validation"]:
-		await modal_ctx.send("Vous venez de lier votre compte discord et compte Minecraft, felicitation", ephemeral=True)
+		await lang.send_message(modal_ctx, "otc_validation")
 		await webhook.send("Le joueur {} s'est lie avec le pseudo {}, pour le serveur {}".format(ctx.author.username, pseudo_minecraft, ctx.guild.name))
 		
 		BDD.addPlayer(ctx.guild_id, ctx.author_id, pseudo_minecraft)

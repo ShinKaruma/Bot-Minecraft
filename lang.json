@@ -1,7 +1,7 @@
 {
     "fr": {
         "no_players_online": "Aucun joueur n'est actuellement en ligne.",
-        "players_online_list": "Liste des joueurs en ligne :",
+        "players_online_list": "Liste des joueurs en ligne : \n {players}",
         "player_killed": "Le joueur `{target}` a été tué. Raison : `{reason}`",
         "player_not_online": "Le joueur `{target}` n'est pas en ligne.",
         "kill_error": "Une erreur s'est produite lors de la tentative de tuer le joueur.",
@@ -29,11 +29,13 @@
         "label_ip": "Adresse IP du serveur Minecraft",
         "label_rcon_port": "Port RCON du serveur Minecraft",
         "label_rcon_password": "Mot de passe RCON du serveur Minecraft",
-        "label_title": "Configuration du serveur Minecraft"
+        "label_title": "Configuration du serveur Minecraft",
+        "otc": "/msg {0} Le code de vérification est {1}",
+        "otc_validation": "Vous venez de lier votre compte discord et compte Minecraft, felicitation"
     },
     "en-US": {
         "no_players_online": "No players are currently online.",
-        "players_online_list": "List of online players:",
+        "players_online_list": "List of online players: \n {players}",
         "player_killed": "The player `{target}` has been killed. Reason: `{reason}`",
         "player_not_online": "The player `{target}` is not online.",
         "kill_error": "An error occurred while attempting to kill the player.",
@@ -47,11 +49,11 @@
         "current_position": "Current position of `{player}`: X: `{x}`, Y: `{y}`, Z: `{z}`",
         "already_claimed": "You have already used your daily for the day, come back tomorrow",
         "not_connected": "you are not connected to the Minecraft server",
-        "reward": "Congratulations, you have obtained {item_label} and 10 coins! Come back tomorrow for your next reward!",
+        "reward": "Congratulations, you have obtained {libelle_item} and 10 coins! Come back tomorrow for your next reward!",
         "server_not_linked": "The Discord server you want to use a command on is not linked to any Minecraft server, please refer to the server administrator",
         "user_not_linked": "The user has not linked a Minecraft account to this server, please start with the `/link` command",
         "user_balance": "**{}** has **{}** coins",
-        "your_balance": "You have **{}** coins",
+        "your_balance": "You have **{coins}** coins",
         "locale_command": "Command to display a player's local language",
         "server_already_linked": "The Discord server is already linked to a Minecraft server",
         "server_linked": "The Discord server has been linked to the Minecraft server",
@@ -61,6 +63,12 @@
         "label_ip": "Minecraft Server IP Address",
         "label_rcon_port": "Minecraft Server RCON Port",
         "label_rcon_password": "Minecraft Server RCON Password",
-        "label_title": "Minecraft Server Configuration"
+        "label_title": "Minecraft Server Configuration",
+        "otc": "/msg {0} The verification code is {1}",
+        "otc_validation": "You have just linked your Discord account and Minecraft account, congratulations",
+        "error_coins_amount": "The amount of coins must be positive",
+        "coins_added": "You have added {coins} coins to {player}",
+        "coins_removed": "You have removed {coins} coins to {player}",
+        "error_coins_not_enough": "You do not have enough coins to perform this action"
     }
 }
