@@ -1,4 +1,4 @@
-import interactions, requests, generator
+import interactions, generator
 from Classes.passerelle import Passerelle
 from Classes.class_rcon import Rcon
 from Classes.lang_pack import LocalisedMessages

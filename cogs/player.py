@@ -1,9 +1,11 @@
+
 import interactions, mcrcon, json
 from interactions import Extension, slash_command, slash_option, OptionType, SlashContext, Button, ButtonStyle, listen, LocalisedName, LocalisedDesc, Permissions, slash_default_member_permission, AutocompleteContext, SlashCommandChoice, user_context_menu, Member, ContextMenuContext
 from interactions.api.events import Component
 from Classes.passerelle import Passerelle
 from Classes.lang_pack import LocalisedMessages
 from datetime import date, timedelta
+
 
 
 
@@ -27,7 +29,7 @@ class Player(Extension):
         
         else:
             return True   
-    
+   
 
     # ==================== PlayerList ====================
 
@@ -198,10 +200,10 @@ class Player(Extension):
     #         {"name": player, "value": player} for player in online_players if player.startswith(string_option_input)
     #     ]
     #     await ctx.send(choices=choices)
+
     
 
     # # ==================== Gamemode ====================
-    
     # @slash_command(
     #     name="gamemode",
     #     description="Modifier le gamemode d'un joueur."
@@ -321,6 +323,7 @@ class Player(Extension):
     #     await ctx.send(choices=choices)
 
     # ==================== Daily ====================
+
 
     @slash_command(
         name="daily",
