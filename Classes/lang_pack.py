@@ -1,14 +1,19 @@
 import json, interactions
-from interactions import SlashContext, ModalContext
+from interactions import SlashContext, ModalContext, Guild
 
 class LocalisedMessages:
     def __init__(self):
         self.lang_path = "..\lang.json"
 
-    def get_message(self, ctx: SlashContext|ModalContext , key):
+    def get_message(self, ctx: SlashContext|ModalContext|Guild , key):
         KnownLocales = ["en-US", "fr"]
+        locale = None
 
-        locale = ctx.locale
+        if isinstance(ctx, Guild):
+            locale = ctx.preferred_locale
+        else:
+            locale = ctx.locale
+        
         if locale not in KnownLocales:
             locale = "en-US"
   

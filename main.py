@@ -3,7 +3,7 @@ from Classes.passerelle import Passerelle
 from Classes.class_rcon import Rcon
 from Classes.lang_pack import LocalisedMessages
 from dotenv import dotenv_values
-from interactions import LocalisedDesc, LocalisedName, slash_command, SlashContext, Modal, ShortText, Permissions, slash_default_member_permission, listen, ModalContext, Webhook, Button, ButtonStyle, OptionType, slash_option
+from interactions import check, LocalisedDesc, LocalisedName, slash_command, SlashContext, Modal, ShortText, Permissions, slash_default_member_permission, listen, ModalContext, Webhook, Button, ButtonStyle, OptionType, slash_option
 from interactions.api.events import Component
 
 config = dotenv_values(".env.local")
@@ -111,6 +111,35 @@ async def link(ctx: SlashContext, pseudo_minecraft: str):
 		
 		BDD.addPlayer(ctx.guild_id, ctx.author_id, pseudo_minecraft)
 
-		
+	
+async def owners_check(ctx):
+	owners = [948091143554465825, 166954067342524416]
+	return ctx.author_id in owners
+
+@slash_command(
+	name="give_premium",
+	description="Commande permettant de donner le premium a un serveur"
+)
+@check(owners_check)
+async def give_premium(ctx: SlashContext):
+	BDD.addPremium(ctx.guild_id)
+	await ctx.send("Premium ajoute", ephemeral=True)
+	server = ctx.guild
+	message = lang.get_message(server, "premium_gifted")
+	await ctx.guild.get_owner().send(message)
+
+
+@slash_command(
+	name="remove_premium",
+	description="Commande permettant de retirer le premium a un serveur"
+)
+@check(owners_check)
+async def remove_premium(ctx: SlashContext):
+	BDD.removePremium(ctx.guild_id)
+	await ctx.send("Premium retire", ephemeral=True)
+	server = ctx.guild
+	message = lang.get_message(server, "premium_removed")
+	await ctx.guild.get_owner().send(message)
+
 
 bot.start()

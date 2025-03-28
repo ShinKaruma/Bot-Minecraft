@@ -1,5 +1,5 @@
 import interactions, mcrcon, json
-from interactions import Extension, slash_command, slash_option, OptionType, SlashContext, Button, ButtonStyle, listen, LocalisedName, LocalisedDesc, Permissions, slash_default_member_permission, AutocompleteContext, SlashCommandChoice
+from interactions import Extension, slash_command, slash_option, OptionType, SlashContext, Button, ButtonStyle, listen, LocalisedName, LocalisedDesc, Permissions, slash_default_member_permission, AutocompleteContext, SlashCommandChoice, user_context_menu, Member, ContextMenuContext
 from interactions.api.events import Component
 from Classes.passerelle import Passerelle
 from Classes.lang_pack import LocalisedMessages
@@ -13,7 +13,7 @@ class Player(Extension):
         self.BDD = Passerelle()
         self.lang_pack = LocalisedMessages()
 
-    async def do_everything_exists(self, ctx: SlashContext):
+    async def do_everything_exists(self, ctx: SlashContext | ContextMenuContext):
         id_serveur_discord = ctx.guild_id
         id_user_discord = ctx.author_id
 
@@ -351,18 +351,19 @@ class Player(Extension):
             await self.lang_pack.send_message(ctx, "not_connected")
             return
 
+        items = self.BDD.getitemsDaily(ctx.locale)
         
-        
-        items = self.BDD.getitemsDaily()
+        if self.BDD.isServerPremium(id_serveur_discord):
+            items.update(self.BDD.getDailyItemsPremium(id_serveur_discord))
+
+
         choix_item = self.BDD.randItemChoice(items)
-        rcon.giveItem(pseudo_minecraft, choix_item[0])
-        libelle_item = self.BDD.getItemLibelle(choix_item[1][0], ctx.locale)
-        print(libelle_item)
+        rcon.giveItem(pseudo_minecraft, choix_item[1])
         self.BDD.updatePlayerDate(id_user_discord=id_user_discord, id_serveur_discord=id_serveur_discord)
         self.BDD.addNbDaily(id_user_discord=id_user_discord, id_serveur_discord=id_serveur_discord)
         self.BDD.addCoins(id_user_discord, id_serveur_discord, 10)
 
-        await self.lang_pack.send_message(ctx, "reward", libelle_item=libelle_item)
+        await self.lang_pack.send_message(ctx, "reward", libelle_item=choix_item[0])
 
 
     @slash_command(
@@ -403,6 +404,22 @@ class Player(Extension):
         
         user_coins = self.BDD.getNbCoins(id_user_discord=id_user_discord, id_serveur_discord=id_serveur_discord)
         await self.lang_pack.send_message(ctx, "your_balance", coins=user_coins)
+
+    @user_context_menu(
+        name="Check Balance"
+    )
+    async def giveCoins(self, ctx: ContextMenuContext):
+        if not self.BDD.doDiscordExists(id_discord=ctx.guild_id):
+            await self.lang_pack.send_message(ctx, "server_not_linked")
+            return
+
+        if not self.BDD.doUserExists(id_serveur_discord=ctx.guild_id, id_user_discord=ctx.target_id):
+            await self.lang_pack.send_message(ctx, "user_not_linked")
+            return
+        
+        balance = self.BDD.getNbCoins(ctx.target_id, ctx.guild_id)
+        await self.lang_pack.send_message(ctx, "user_balance", user=ctx.target.display_name, coins=balance)
+
 
     
 
