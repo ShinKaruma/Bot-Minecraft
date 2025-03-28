@@ -3,8 +3,10 @@ from dotenv import dotenv_values
 from random import choices
 from datetime import date
 from Classes.class_rcon import Rcon
+from interactions import Embed, EmbedField, ModalContext, LocalisedDesc
 from Crypto.Cipher import AES
 from Crypto.Util import Counter
+from typing import List
 
 
 class Passerelle:
@@ -90,16 +92,20 @@ class Passerelle:
         decrypted_data = cipher.decrypt(ciphertext)
         return decrypted_data.decode()
     
-    def getitemsDaily(self) -> dict: 
+    def getitemsDaily(self, locale: str) -> dict: 
+        KnownLocales = ["en-US", "fr"]
+
+        if locale not in KnownLocales:
+            locale = "en-US"
         ### Fonction permettant de ressortir une liste d'id avec un poids pour sélection aléatoire
-        req = "select id_libelle, poids from daily"
+        req = "select libelle, ID_Item, poids from daily join libelle_daily on daily.id_libelle = libelle_daily.id_libelle where locale = %s"
+        self.cursor.execute(req, (locale,))
         resultat = {}
-        self.cursor.execute(req)
 
         output = self.cursor.fetchall()
 
         for x in output:
-            resultat.update({x[0]:x[1]})
+            resultat.update({(x[0], x[1]):x[2]})
             
         return resultat
     
@@ -110,17 +116,7 @@ class Passerelle:
 
         choix = choices(ids, weights=poids, k=1)
 
-        req = "select ID_item from daily where id_libelle = %s"
-        resultat = self._execute_query(req, choix)[0]
-
-        return (resultat, choix)
-    
-    def getItemLibelle(self, id_libelle:int) -> str:
-        query = "select libelle from libelle_daily where id_libelle = %s"
-        resultat = self._execute_query(query, id_libelle)[0]
-
-        return resultat
-
+        return choix[0]
 
     def updatePlayerDate(self, id_user_discord, id_serveur_discord) -> None:
         ### fonction permettant d'actualiser la date de la dernière utilisation de la commande /daily
@@ -157,11 +153,95 @@ class Passerelle:
         nb_coins = self._execute_query(req, (id_user_discord, id_serveur_discord))[0]
         nb_coins-= p_nb_coins
 
+        if nb_coins < 0:
+            nb_coins = 0
+
         query = "update user set total_coins = %s where id_user_discord = %s and id_serveur_discord = %s"
         self._execute_query(query, (nb_coins, id_user_discord, id_serveur_discord))
         self.connector.commit()
     
-    def getNbCoins(self, id_user_discord, id_serveur_discord):
+    def getNbCoins(self, id_user_discord, id_serveur_discord) -> int:
         req = "select total_coins from user where id_user_discord = %s and id_serveur_discord = %s"
         nb_coins = self._execute_query(req, (id_user_discord, id_serveur_discord))[0]
         return nb_coins
+    
+    def getShopItems(self) -> List[Embed]:
+        req = "select id_item, titre, prix_item, item_id from shop"
+        self.cursor.execute(req)
+        result = self.cursor.fetchall()
+        Embeds = []
+        for x in result:
+            Embeds.append(Embed(title="Shop", description="item",
+            fields=[
+                EmbedField(name="Item", value=str(x[1])), 
+                EmbedField(name="Price", value=str(x[2])), 
+                EmbedField(name="ID", value=str(x[3]))
+                ]))
+        
+        return Embeds
+
+            
+    def getShopitemsPremium(self) -> List[Embed]:
+        req = "select id_item, libelle, prix_item from shop_premium"
+        self.cursor.execute(req)
+        result = self.cursor.fetchall()
+        Embeds = []
+        for x in result:
+            Embeds.append(Embed(title="Shop Premium", description="premium item",
+            fields=[
+                EmbedField(name="Item", value=str(x[1])), 
+                EmbedField(name="Price", value=str(x[2])), 
+                EmbedField(name="ID", value=str(x[0]))
+                ]
+            ))
+        
+        return Embeds
+    
+    def isServerPremium(self, id_serveur_discord) -> bool:
+        req = "select count(id_serveur_discord) from achat where id_serveur_discord = %s and id_package = 1"
+        result = self._execute_query(req, (id_serveur_discord,))[0]
+        return result == 1 if result else False
+
+
+    def addItemShop(self, ctx: ModalContext, titre, prix_item, id_item) -> None:
+        req = "insert into shop_premium (id_item, prix_item, id_serveur_discord, libelle) values (%s, %s, %s, %s)"
+        self._execute_query(req, (id_item, prix_item, ctx.guild_id, titre))
+        self.connector.commit()
+    
+    def removeItemShop(self, id_item, id_serveur_discord) -> None:
+        req = "delete from shop_premium where id_item = %s and id_serveur_discord = %s"
+        self._execute_query(req, (id_item, id_serveur_discord))
+        self.connector.commit()
+
+    def addPremium(self, id_server_discord) -> None:
+        req = "insert into achat (id_serveur_discord, id_package) values (%s, 1)"
+        self._execute_query(req, (id_server_discord,))
+        self.connector.commit()
+
+    def removePremium(self, id_server_discord) -> None:
+        req = "delete from achat where id_serveur_discord = %s"
+        self._execute_query(req, (id_server_discord,))
+        self.connector.commit()
+
+    def addItemDaily(self, id_serveur_discord, id_item, libelle, poids) -> None:
+        req = "insert into daily_premium (id_item, libelle, poids, id_serveur_discord) values (%s, %s, %s, %s)"
+        self._execute_query(req, (id_item, libelle, poids, id_serveur_discord))
+        self.connector.commit()
+
+    def removeItemDaily(self, id_item, id_serveur_discord) -> None:
+        req = "delete from daily_premium where id_item = %s and id_serveur_discord = %s"
+        self._execute_query(req, (id_item, id_serveur_discord))
+        self.connector.commit()
+    
+    def getDailyItemsPremium(self, id_serveur_discord) -> dict:
+        req = "select id_item, libelle, poids from daily_premium where id_serveur_discord = %s"
+        self.cursor.execute(req, (id_serveur_discord,))
+        resultat = {}
+
+        output = self.cursor.fetchall()
+
+        for x in output:
+            resultat.update({(x[1], x[0]):x[2]})
+            
+        return resultat
+        

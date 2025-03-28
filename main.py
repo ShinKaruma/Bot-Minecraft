@@ -1,7 +1,10 @@
 import interactions, generator
 from Classes.passerelle import Passerelle
+from Classes.class_rcon import Rcon
+from Classes.lang_pack import LocalisedMessages
 from dotenv import dotenv_values
-from interactions import slash_command, SlashContext, Modal, ShortText, Permissions, slash_default_member_permission, listen, ModalContext, Webhook, Button, ButtonStyle, OptionType, slash_option
+from interactions import check, LocalisedDesc, LocalisedName, slash_command, SlashContext, Modal, ShortText, Permissions, slash_default_member_permission, listen, ModalContext, Webhook, Button, ButtonStyle, OptionType, slash_option
+from interactions.api.events import Component
 
 config = dotenv_values(".env.local")
 
@@ -9,8 +12,11 @@ bot = interactions.Client(token=config["TOKEN"])
 webhook = Webhook.from_url('https://discord.com/api/webhooks/1142216101883826368/gZPal68Idbj3hHU1MFJYm64H8xEli9CuTtuHfAy3NAT6gJ4YKsNMOelllzbWLyagXvRY', bot)
 OTC = int
 BDD = Passerelle()
+lang = LocalisedMessages()
 
 bot.load_extension("cogs.player")
+bot.load_extension("cogs.shop")
+bot.load_extension("interactions.ext.jurigged")
 
 @listen()
 async def on_ready():
@@ -19,31 +25,39 @@ async def on_ready():
 	
 @slash_command(
 	name="connect",
-	description="Commande permettant de lier un serveur discord a un serveur minecraft",
+	description=LocalisedDesc(
+		english_us="Command to link a discord server to a minecraft server",
+		french="Commande permettant de lier un serveur discord a un serveur minecraft",
+	),
 )
 @slash_default_member_permission(Permissions.MANAGE_GUILD)
 async def connect(ctx: SlashContext):
 
 	if BDD.doDiscordExists(int(ctx.guild_id)):
-		await ctx.send("Vous avez déjà un serveur minecraft lié",ephemeral=True)
+		await lang.send_message(ctx, "already_linked")
 		return
+		
 
 
 	#verif si id_serveur existe si oui pass
+	label_ip = lang.get_message(ctx, "label_ip")
+	label_rcon_password = lang.get_message(ctx, "label_rcon_password")
+	label_rcon_port = lang.get_message(ctx, "label_rcon_port")
+	label_title = lang.get_message(ctx, "label_title")
 
 	formulaireConnection = Modal(
-		ShortText(label="IP du serveur Minecraft", custom_id="ip_serveur_minecraft"),
-		ShortText(label="Mot de passe du RCON du serveur", custom_id="pwd_rcon"),
-		ShortText(label="Port RCON du serveur minecraft", custom_id="port_rcon"),
+		ShortText(label=label_ip, custom_id="ip_serveur_minecraft"),
+		ShortText(label=label_rcon_password, custom_id="pwd_rcon"),
+		ShortText(label=label_rcon_port, custom_id="port_rcon"),
 
-		title="Formulaire de connection"
+		title=label_title
 	)
 	await ctx.send_modal(modal=formulaireConnection)
 
 	modal_ctx: ModalContext = await ctx.bot.wait_for_modal(formulaireConnection)
 
 	data = modal_ctx.responses
-	await modal_ctx.send("Vous avez bien lie vos serveurs", ephemeral=True)
+	await lang.send_message(modal_ctx, "server_linked")
 
 	await webhook.send("Le Serveur {} s'est bien ajoute a la liste des clients. Pour contacter le proprietaire : {}".format(ctx.guild.name, ctx.guild.get_owner().username))
 
@@ -63,16 +77,16 @@ async def connect(ctx: SlashContext):
 )
 async def link(ctx: SlashContext, pseudo_minecraft: str):
 	if BDD.doDiscordExists(ctx.guild_id) == False:
-		ctx.send("Le serveur discord n'est pas lié à un serveur minecraft, veuillez contacter un administrateur", ephemeral=True)
+		await lang.send_message(ctx, "server_not_linked")
 		return
 	
 	if BDD.doUserExists(int(ctx.guild_id), int(ctx.author_id)):
-		await ctx.send("Vous êtes déjà lié au serveur", ephemeral=True)
+		await lang.send_message(ctx, "user_already_linked")
 		return
 	
 
 	if BDD.isPlayerLinked(int(ctx.guild_id), pseudo_minecraft):
-		await ctx.send("Le pseudo du joueur a déjà été lié à un compte", ephemeral=True)
+		await lang.send_message(ctx, "minecraft_already_linked")
 		return
 	
 	formulaireLien = Modal(
@@ -86,17 +100,46 @@ async def link(ctx: SlashContext, pseudo_minecraft: str):
 	await ctx.send_modal(modal=formulaireLien)
 	OTC = generator.generate()
 
-	rcon.sendOTP(pseudo=pseudo_minecraft, OTP=OTC)
+	rcon.sendOTP(ctx, pseudo=pseudo_minecraft, OTP=OTC)
 
 	modal_ctx: ModalContext = await ctx.bot.wait_for_modal(formulaireLien)
 
 
 	if OTC == modal_ctx.responses["OTC_Validation"]:
-		await modal_ctx.send("Vous venez de lier votre compte discord et compte Minecraft, felicitation", ephemeral=True)
+		await lang.send_message(modal_ctx, "otc_validation")
 		await webhook.send("Le joueur {} s'est lie avec le pseudo {}, pour le serveur {}".format(ctx.author.username, pseudo_minecraft, ctx.guild.name))
 		
 		BDD.addPlayer(ctx.guild_id, ctx.author_id, pseudo_minecraft)
 
-		
+	
+async def owners_check(ctx):
+	owners = [948091143554465825, 166954067342524416]
+	return ctx.author_id in owners
+
+@slash_command(
+	name="give_premium",
+	description="Commande permettant de donner le premium a un serveur"
+)
+@check(owners_check)
+async def give_premium(ctx: SlashContext):
+	BDD.addPremium(ctx.guild_id)
+	await ctx.send("Premium ajoute", ephemeral=True)
+	server = ctx.guild
+	message = lang.get_message(server, "premium_gifted")
+	await ctx.guild.get_owner().send(message)
+
+
+@slash_command(
+	name="remove_premium",
+	description="Commande permettant de retirer le premium a un serveur"
+)
+@check(owners_check)
+async def remove_premium(ctx: SlashContext):
+	BDD.removePremium(ctx.guild_id)
+	await ctx.send("Premium retire", ephemeral=True)
+	server = ctx.guild
+	message = lang.get_message(server, "premium_removed")
+	await ctx.guild.get_owner().send(message)
+
 
 bot.start()
