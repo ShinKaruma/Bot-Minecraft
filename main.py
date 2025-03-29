@@ -6,7 +6,7 @@ from dotenv import dotenv_values
 from interactions import check, LocalisedDesc, LocalisedName, slash_command, SlashContext, Modal, ShortText, Permissions, slash_default_member_permission, listen, ModalContext, Webhook, Button, ButtonStyle, OptionType, slash_option
 from interactions.api.events import Component
 
-config = dotenv_values(".env.local")
+config = dotenv_values(".env")
 
 bot = interactions.Client(token=config["TOKEN"])
 webhook = Webhook.from_url('https://discord.com/api/webhooks/1142216101883826368/gZPal68Idbj3hHU1MFJYm64H8xEli9CuTtuHfAy3NAT6gJ4YKsNMOelllzbWLyagXvRY', bot)
@@ -34,7 +34,7 @@ async def on_ready():
 async def connect(ctx: SlashContext):
 
 	if BDD.doDiscordExists(int(ctx.guild_id)):
-		await lang.send_message(ctx, "already_linked")
+		await lang.send_message(ctx, "server_already_linked")
 		return
 		
 
@@ -76,7 +76,7 @@ async def connect(ctx: SlashContext):
 	opt_type=OptionType.STRING
 )
 async def link(ctx: SlashContext, pseudo_minecraft: str):
-	if BDD.doDiscordExists(ctx.guild_id) == False:
+	if not BDD.doDiscordExists(int(ctx.guild_id)):
 		await lang.send_message(ctx, "server_not_linked")
 		return
 	
@@ -95,8 +95,8 @@ async def link(ctx: SlashContext, pseudo_minecraft: str):
 		title="Validation OTC"
 	)
 
-	rcon = BDD.getRconDiscord(ctx.guild_id)
-	
+	rcon = BDD.getRconDiscord(int(ctx.guild_id))
+
 	await ctx.send_modal(modal=formulaireLien)
 	OTC = generator.generate()
 
@@ -109,12 +109,12 @@ async def link(ctx: SlashContext, pseudo_minecraft: str):
 		await lang.send_message(modal_ctx, "otc_validation")
 		await webhook.send("Le joueur {} s'est lie avec le pseudo {}, pour le serveur {}".format(ctx.author.username, pseudo_minecraft, ctx.guild.name))
 		
-		BDD.addPlayer(ctx.guild_id, ctx.author_id, pseudo_minecraft)
+		BDD.addPlayer(int(ctx.guild_id), int(ctx.author_id), pseudo_minecraft)
 
 	
 async def owners_check(ctx):
 	owners = [948091143554465825, 166954067342524416]
-	return ctx.author_id in owners
+	return int(ctx.author_id) in owners
 
 @slash_command(
 	name="give_premium",
@@ -122,7 +122,7 @@ async def owners_check(ctx):
 )
 @check(owners_check)
 async def give_premium(ctx: SlashContext):
-	BDD.addPremium(ctx.guild_id)
+	BDD.addPremium(int(ctx.guild_id))
 	await ctx.send("Premium ajoute", ephemeral=True)
 	server = ctx.guild
 	message = lang.get_message(server, "premium_gifted")
@@ -135,11 +135,13 @@ async def give_premium(ctx: SlashContext):
 )
 @check(owners_check)
 async def remove_premium(ctx: SlashContext):
-	BDD.removePremium(ctx.guild_id)
+	BDD.removePremium(int(ctx.guild_id))
 	await ctx.send("Premium retire", ephemeral=True)
 	server = ctx.guild
 	message = lang.get_message(server, "premium_removed")
 	await ctx.guild.get_owner().send(message)
 
 
-bot.start()
+
+if __name__ == "__main__":
+	bot.start()

@@ -4,3 +4,4 @@ requests==2.27.1
 mcrcon==0.7.0
 mysql-connector-python
 pycryptodomex
+jurigged==0.6.0

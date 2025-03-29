@@ -16,8 +16,8 @@ class Player(Extension):
         self.lang_pack = LocalisedMessages()
 
     async def do_everything_exists(self, ctx: SlashContext | ContextMenuContext):
-        id_serveur_discord = ctx.guild_id
-        id_user_discord = ctx.author_id
+        id_serveur_discord = int(ctx.guild_id)
+        id_user_discord = int(ctx.author_id)
 
         if self.BDD.doDiscordExists(id_discord=id_serveur_discord) == False:
             await self.lang_pack.send_message(ctx, "server_not_linked")
@@ -41,11 +41,11 @@ class Player(Extension):
         )
     )
     async def playerlist(self, ctx: SlashContext):
-        if not self.BDD.doDiscordExists(id_discord=ctx.guild_id):
+        if not self.BDD.doDiscordExists(id_discord=int(ctx.guild_id)):
             await self.lang_pack.send_message(ctx, "server_not_linked")
             return
         
-        rcon = self.BDD.getRconDiscord(ctx.guild_id)
+        rcon = self.BDD.getRconDiscord(int(ctx.guild_id))
         players = rcon.get_online_players()
 
         if players is Exception or players == ['']:
@@ -333,8 +333,8 @@ class Player(Extension):
             )
     )
     async def dailyClaim(self, ctx: SlashContext):
-        id_serveur_discord = ctx.guild_id
-        id_user_discord = ctx.author_id
+        id_serveur_discord = int(ctx.guild_id)
+        id_user_discord = int(ctx.author_id)
 
         if not await self.do_everything_exists(ctx):
             return
@@ -386,21 +386,21 @@ class Player(Extension):
         opt_type=OptionType.USER
     )
     async def getBalance(self, ctx: SlashContext, user: interactions.Member = None):
-        id_serveur_discord = ctx.guild_id
-        id_user_discord = ctx.author_id
+        id_serveur_discord = int(ctx.guild_id)
+        id_user_discord = int(ctx.author_id)
         
 
         if not await self.do_everything_exists(ctx):
             return
 
         if user != None:
-            if self.BDD.doUserExists(id_serveur_discord=id_serveur_discord, id_user_discord=user.id) == False:
+            if self.BDD.doUserExists(id_serveur_discord=id_serveur_discord, id_user_discord=int(user.id)) == False:
                 self.lang_pack.send_message(ctx, "user_not_linked")
                 return
         
             params_id_user = user.id
             user_coins = self.BDD.getNbCoins(params_id_user, id_serveur_discord=id_serveur_discord)
-            await self.lang_pack.send_message(ctx, "user_balance", user=user.display_name, coins=user_coins)
+            await self.lang_pack.send_message(ctx, "user_balance", user=user.mention, coins=user_coins)
             return
             
         
@@ -412,15 +412,15 @@ class Player(Extension):
         name="Check Balance"
     )
     async def giveCoins(self, ctx: ContextMenuContext):
-        if not self.BDD.doDiscordExists(id_discord=ctx.guild_id):
+        if not self.BDD.doDiscordExists(id_discord=int(ctx.guild_id)):
             await self.lang_pack.send_message(ctx, "server_not_linked")
             return
 
-        if not self.BDD.doUserExists(id_serveur_discord=ctx.guild_id, id_user_discord=ctx.target_id):
+        if not self.BDD.doUserExists(id_serveur_discord=int(ctx.guild_id), id_user_discord=int(ctx.target_id)):
             await self.lang_pack.send_message(ctx, "user_not_linked")
             return
         
-        balance = self.BDD.getNbCoins(ctx.target_id, ctx.guild_id)
+        balance = self.BDD.getNbCoins(int(ctx.target_id), int(ctx.guild_id))
         await self.lang_pack.send_message(ctx, "user_balance", user=ctx.target.display_name, coins=balance)
 
 

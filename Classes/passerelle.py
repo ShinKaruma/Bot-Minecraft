@@ -10,7 +10,7 @@ from typing import List
 
 
 class Passerelle:
-    config = dotenv_values(".env.local")
+    config = dotenv_values(".env")
 
     def __init__(self) -> None:
         ### initialisation de la connection à la base de donnée à partir des informations du fichier .env (ou .env.local hors environnement prod)
@@ -24,12 +24,15 @@ class Passerelle:
 
     def _execute_query(self, query, params=None):
         self.cursor.execute(query, params)
+        for i in params:
+            print("variable :", i  , sep=" ")
+            print("type :", type(i), sep=" ")
         return self.cursor.fetchone()
 
     def doDiscordExists(self, id_discord) -> bool:
         ### fonction de vérification si un serveur discord existe déjà dans la base de données
         query = "SELECT COUNT(*) FROM serveur WHERE id_serveur_discord = %s"
-        result = self._execute_query(query, (id_discord,))
+        result = self._execute_query(query, (int(id_discord),))
         return result[0] == 1 if result else False
 
     def addDiscordServer(self, id_discord, ip_server, pwd_rcon, port_rcon) -> None:
@@ -181,9 +184,9 @@ class Passerelle:
         return Embeds
 
             
-    def getShopitemsPremium(self) -> List[Embed]:
-        req = "select id_item, libelle, prix_item from shop_premium"
-        self.cursor.execute(req)
+    def getShopitemsPremium(self, id_serveur_discord) -> List[Embed]:
+        req = "select id_item, libelle, prix_item from shop_premium where id_serveur_discord = %s"
+        self.cursor.execute(req, (id_serveur_discord,))
         result = self.cursor.fetchall()
         Embeds = []
         for x in result:
@@ -205,7 +208,7 @@ class Passerelle:
 
     def addItemShop(self, ctx: ModalContext, titre, prix_item, id_item) -> None:
         req = "insert into shop_premium (id_item, prix_item, id_serveur_discord, libelle) values (%s, %s, %s, %s)"
-        self._execute_query(req, (id_item, prix_item, ctx.guild_id, titre))
+        self._execute_query(req, (id_item, prix_item, int(ctx.guild_id), titre))
         self.connector.commit()
     
     def removeItemShop(self, id_item, id_serveur_discord) -> None:

@@ -3,7 +3,7 @@
 -- http://www.phpmyadmin.net
 --
 -- Client :  localhost
--- Généré le :  Jeu 27 Février 2025 à 09:08
+-- Généré le :  Ven 28 Mars 2025 à 22:44
 -- Version du serveur :  5.6.20-log
 -- Version de PHP :  5.4.31
 
@@ -27,7 +27,7 @@ SET time_zone = "+00:00";
 --
 
 CREATE TABLE IF NOT EXISTS `achat` (
-  `id_serveur_discord` bigint(20) NOT NULL,
+  `id_serveur_discord` int(20) NOT NULL,
   `id_package` int(11) NOT NULL
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;
 
@@ -72,8 +72,9 @@ INSERT INTO `daily` (`id_libelle`, `ID_Item`, `poids`) VALUES
 
 CREATE TABLE IF NOT EXISTS `daily_premium` (
   `ID_Item` varchar(50) NOT NULL,
+  `libelle` varchar(60) NOT NULL,
   `poids` int(11) DEFAULT NULL,
-  `id_serveur_discord` bigint(20) NOT NULL
+  `id_serveur_discord` int(20) NOT NULL
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;
 
 -- --------------------------------------------------------
@@ -85,7 +86,7 @@ CREATE TABLE IF NOT EXISTS `daily_premium` (
 CREATE TABLE IF NOT EXISTS `libelle_daily` (
   `id_libelle` int(11) NOT NULL,
   `libelle` varchar(60) NOT NULL,
-  `locale` text NOT NULL
+  `locale` varchar(6) NOT NULL
 ) ENGINE=InnoDB DEFAULT CHARSET=latin1;
 
 --
@@ -93,20 +94,35 @@ CREATE TABLE IF NOT EXISTS `libelle_daily` (
 --
 
 INSERT INTO `libelle_daily` (`id_libelle`, `libelle`, `locale`) VALUES
+(1, '64 deepslate', 'en-US'),
 (1, '64 blocs de deepslate', 'fr'),
+(2, '64 stone', 'en-US'),
 (2, '64 blocs de stone', 'fr'),
+(3, '32 birch logs', 'en-US'),
 (3, '32 bûches de boulot', 'fr'),
+(4, '32 oak logs', 'en-US'),
 (4, '32 bûches de chêne', 'fr'),
+(5, '32 spruce logs', 'en-US'),
 (5, '32 bûches de sapin', 'fr'),
+(6, '16 potatoes', 'en-US'),
 (6, '16 pommes de terre', 'fr'),
+(7, '16 carrots', 'en-US'),
 (7, '16 carottes', 'fr'),
+(8, '8 gold ingots', 'en-US'),
 (8, '8 lingots d''or', 'fr'),
+(9, '8 iron blocks', 'en-US'),
 (9, '8 blocs de fer', 'fr'),
+(10, '16 bottle O''Enchanting', 'en-US'),
 (10, '16 bouteilles d''expérience', 'fr'),
+(11, '1 enchanted golden apple', 'en-US'),
 (11, '1 pomme d''or enchantée', 'fr'),
+(12, '1 netherite ingot', 'en-US'),
 (12, '1 lingot de netherite', 'fr'),
+(13, '1 wither skeleton skull', 'en-US'),
 (13, '1 crâne de wither squelette', 'fr'),
+(14, '2 wither skeleton skull', 'en-US'),
 (14, '2 crânes de wither squelette', 'fr'),
+(15, '3 wither skeleton skull', 'en-US'),
 (15, '3 crânes de wither squelette', 'fr');
 
 -- --------------------------------------------------------
@@ -120,6 +136,13 @@ CREATE TABLE IF NOT EXISTS `packages` (
   `libelle` varchar(50) DEFAULT NULL
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;
 
+--
+-- Contenu de la table `packages`
+--
+
+INSERT INTO `packages` (`id_package`, `libelle`) VALUES
+(1, 'Premium');
+
 -- --------------------------------------------------------
 
 --
@@ -127,8 +150,8 @@ CREATE TABLE IF NOT EXISTS `packages` (
 --
 
 CREATE TABLE IF NOT EXISTS `serveur` (
-  `id_serveur_discord` bigint(20) NOT NULL,
-  `ip_serveur_minecraft` varchar(15) DEFAULT NULL,
+  `id_serveur_discord` int(20) NOT NULL,
+  `ip_serveur_minecraft` varchar(60) DEFAULT NULL,
   `pwd_rcon` varbinary(50) DEFAULT NULL,
   `port_rcon` int(11) DEFAULT NULL
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;
@@ -140,9 +163,23 @@ CREATE TABLE IF NOT EXISTS `serveur` (
 --
 
 CREATE TABLE IF NOT EXISTS `shop` (
-  `id_item` varchar(50) NOT NULL,
+  `id_item` int(50) NOT NULL,
+  `titre` varchar(60) NOT NULL,
+  `item_id` varchar(60) NOT NULL,
   `prix_item` int(11) DEFAULT NULL
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;
+
+--
+-- Contenu de la table `shop`
+--
+
+INSERT INTO `shop` (`id_item`, `titre`, `item_id`, `prix_item`) VALUES
+(1, '16 Stone', 'minecraft:stone 16', 5),
+(2, '8 Oak Sappling', 'minecraft:oak_sappling 8', 5),
+(3, '4 Iron', 'minecraft:iron_ingot 4', 15),
+(4, 'Fighter''s kit', 'X', 30),
+(5, 'Adventurer''s kit', 'XX', 25),
+(6, 'Farmer''s kit', 'XXX', 25);
 
 -- --------------------------------------------------------
 
@@ -153,7 +190,8 @@ CREATE TABLE IF NOT EXISTS `shop` (
 CREATE TABLE IF NOT EXISTS `shop_premium` (
   `id_item` varchar(50) NOT NULL,
   `prix_item` int(11) DEFAULT NULL,
-  `id_serveur_discord` bigint(20) NOT NULL
+  `id_serveur_discord` int(20) NOT NULL,
+  `libelle` varchar(60) NOT NULL
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;
 
 -- --------------------------------------------------------
@@ -163,8 +201,8 @@ CREATE TABLE IF NOT EXISTS `shop_premium` (
 --
 
 CREATE TABLE IF NOT EXISTS `user` (
-  `id_user_discord` bigint(20) NOT NULL,
-  `id_serveur_discord` bigint(20) NOT NULL,
+  `id_user_discord` int(20) NOT NULL,
+  `id_serveur_discord` int(20) NOT NULL,
   `pseudo_minecraft` varchar(50) DEFAULT NULL,
   `date_dernier_daily` date DEFAULT NULL,
   `nb_daily` int(11) DEFAULT '0',
@@ -197,7 +235,7 @@ ALTER TABLE `daily_premium`
 -- Index pour la table `libelle_daily`
 --
 ALTER TABLE `libelle_daily`
- ADD PRIMARY KEY (`id_libelle`,`locale`(6));
+ ADD PRIMARY KEY (`id_libelle`,`locale`);
 
 --
 -- Index pour la table `packages`

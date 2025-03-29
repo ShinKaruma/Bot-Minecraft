@@ -1,5 +1,5 @@
 import interactions
-from interactions import Embed, EmbedField, Extension, ModalContext, ShortText, slash_command, slash_option, Modal, OptionType, SlashContext, Button, ButtonStyle, listen, LocalisedName, LocalisedDesc, Permissions, slash_default_member_permission, AutocompleteContext, SlashCommandChoice
+from interactions import Embed, EmbedField, Extension, Member, ModalContext, ShortText, slash_command, slash_option, Modal, OptionType, SlashContext, Button, ButtonStyle, listen, LocalisedName, LocalisedDesc, Permissions, slash_default_member_permission, AutocompleteContext, SlashCommandChoice
 from interactions.api.events import Component
 from interactions.ext.paginators import Paginator
 from Classes.passerelle import Passerelle
@@ -14,8 +14,8 @@ class Shop(Extension):
         self.lang_pack = LocalisedMessages()
 
     async def do_everything_exists(self, ctx: SlashContext):
-        id_serveur_discord = ctx.guild_id
-        id_user_discord = ctx.author_id
+        id_serveur_discord = int(ctx.guild_id)
+        id_user_discord = int(ctx.author_id)
 
         if self.BDD.doDiscordExists(id_discord=id_serveur_discord) == False:
             await self.lang_pack.send_message(ctx, "server_not_linked")
@@ -59,13 +59,15 @@ class Shop(Extension):
         opt_type=OptionType.INTEGER
     )
     @slash_default_member_permission(Permissions.MODERATE_MEMBERS)
-    async def give_coins(self, ctx: SlashContext, user, amount):
+    async def give_coins(self, ctx: SlashContext, user: Member, amount):
+        id_serveur_discord = int(ctx.guild_id)
+        id_user_discord = int(user.id)
 
-        if not self.BDD.doDiscordExists(id_discord=ctx.guild_id):
+        if not self.BDD.doDiscordExists(id_discord=id_serveur_discord):
             await self.lang_pack.send_message(ctx, "server_not_linked")
             return
         
-        if not self.BDD.doUserExists(id_serveur_discord=ctx.guild_id, id_user_discord=user.id):
+        if not self.BDD.doUserExists(id_serveur_discord=ctx.guild_id, id_user_discord=id_user_discord):
             await self.lang_pack.send_message(ctx, "user_not_linked")
             return
         
@@ -73,7 +75,7 @@ class Shop(Extension):
             await self.lang_pack.send_message(ctx, "error_coin_amount")
             return
 
-        self.BDD.addCoins(user.id, ctx.guild_id, amount)
+        self.BDD.addCoins(id_user_discord, int(ctx.guild_id), amount)
         await self.lang_pack.send_message(ctx, "coins_added", player=user.mention, coins=amount)
 
     
@@ -106,13 +108,13 @@ class Shop(Extension):
         opt_type=OptionType.INTEGER
     )
     @slash_default_member_permission(Permissions.MODERATE_MEMBERS)
-    async def remove_coins(self, ctx: SlashContext, user, amount):
+    async def remove_coins(self, ctx: SlashContext, user:Member, amount):
 
-        if not self.BDD.doDiscordExists(id_discord=ctx.guild_id):
+        if not self.BDD.doDiscordExists(id_discord=int(ctx.guild_id)):
             await self.lang_pack.send_message(ctx, "server_not_linked")
             return
         
-        if not self.BDD.doUserExists(id_serveur_discord=ctx.guild_id, id_user_discord=user.id):
+        if not self.BDD.doUserExists(id_serveur_discord=int(ctx.guild_id), id_user_discord=int(user.id)):
             await self.lang_pack.send_message(ctx, "user_not_linked")
             return
         
@@ -120,7 +122,7 @@ class Shop(Extension):
             await self.lang_pack.send_message(ctx, "error_coin_amount")
             return
 
-        self.BDD.removeCoins(user.id, ctx.guild_id, amount)
+        self.BDD.remCoins(int(user.id), int(ctx.guild_id), amount)
         await self.lang_pack.send_message(ctx, "coins_removed", player=user.mention, coins=amount)
 
 
@@ -155,7 +157,7 @@ class Shop(Extension):
         required=True,
         opt_type=OptionType.INTEGER
     )
-    async def pay(self, ctx: SlashContext, player, amount):
+    async def pay(self, ctx: SlashContext, player:Member, amount):
 
         if not self.do_everything_exists(ctx):
             return
@@ -168,8 +170,8 @@ class Shop(Extension):
             await self.lang_pack.send_message(ctx, "not_enough_coins")
             return
 
-        self.BDD.remCoins(ctx.author_id, ctx.guild_id, amount)
-        self.BDD.addCoins(player.id, ctx.guild_id, amount)
+        self.BDD.remCoins(int(ctx.author_id), int(ctx.guild_id), amount)
+        self.BDD.addCoins(int(player.id), int(ctx.guild_id), amount)
         await self.lang_pack.send_message(ctx, "coins_paid", player=player.mention, coins=amount)
 
     
@@ -187,21 +189,21 @@ class Shop(Extension):
         
         embeds = self.BDD.getShopItems()
 
-        if self.BDD.isServerPremium(ctx.guild_id):
+        if self.BDD.isServerPremium(int(ctx.guild_id)):
             embeds += self.BDD.getShopitemsPremium()
             
 
         paginator = Paginator.create_from_embeds(self.bot, *embeds)
 
         async def buy(ctx: SlashContext):
-            id_serveur_discord = ctx.guild_id
-            id_user_discord = ctx.author_id
+            id_serveur_discord = int(ctx.guild_id)
+            id_user_discord = int(ctx.author_id)
 
             rcon = self.BDD.getRconDiscord(id_serveur_discord)
             pseudo_minecraft = self.BDD.getPlayer(id_serveur_discord=id_serveur_discord, id_user_discord=id_user_discord)
 
             if not rcon.is_player_online(pseudo_minecraft):
-                await rcon.lang_pack.send_message(ctx, "not_connected")
+                await self.lang_pack.send_message(ctx, "not_connected")
                 return
             
             if self.BDD.getNbCoins(id_user_discord, id_serveur_discord) < int(paginator.pages[paginator.page_index].fields[1].value):
@@ -231,9 +233,6 @@ class Shop(Extension):
                 
             await self.lang_pack.send_message(ctx, "item_bought", item=paginator.pages[paginator.page_index].fields[0].value, coins=paginator.pages[paginator.page_index].fields[1].value)
 
-            print("Button pressed",paginator.page_index+1)
-            print(paginator.pages[paginator.page_index].fields[2].value)
-
         paginator.callback = buy
         paginator.show_callback_button = True
         paginator.timeout_interval = 30
@@ -253,7 +252,7 @@ class Shop(Extension):
         if not await self.do_everything_exists(ctx):
             return
         
-        if not self.BDD.isServerPremium(ctx.guild_id):
+        if not self.BDD.isServerPremium(int(ctx.guild_id)):
             await self.lang_pack.send_message(ctx, "server_not_premium")
             return
         
@@ -288,11 +287,11 @@ class Shop(Extension):
         if not await self.do_everything_exists(ctx):
             return
 
-        if not self.BDD.isServerPremium(ctx.guild_id):
+        if not self.BDD.isServerPremium(int(ctx.guild_id)):
             await self.lang_pack.send_message(ctx, "server_not_premium")
             return
             
-        embeds = self.BDD.getShopitemsPremium()
+        embeds = self.BDD.getShopitemsPremium(int(ctx.guild_id))
 
         if len(embeds) == 0:
             await self.lang_pack.send_message(ctx, "no_item_premium")
@@ -301,7 +300,7 @@ class Shop(Extension):
         paginator = Paginator.create_from_embeds(self.bot, *embeds)
 
         async def remove(ctx: SlashContext):
-            id_serveur_discord = ctx.guild_id
+            id_serveur_discord = int(ctx.guild_id)
             
             self.BDD.removeItemShop(paginator.pages[paginator.page_index].fields[2].value, id_serveur_discord)
             await self.lang_pack.send_message(ctx, "item_removed")
@@ -324,7 +323,7 @@ class Shop(Extension):
         if not await self.do_everything_exists(ctx):
             return
         
-        if not self.BDD.isServerPremium(ctx.guild_id):
+        if not self.BDD.isServerPremium(int(ctx.guild_id)):
             await self.lang_pack.send_message(ctx, "server_not_premium")
             return
 
@@ -340,7 +339,7 @@ class Shop(Extension):
         modal_ctx: ModalContext = await ctx.bot.wait_for_modal(add_item_modal)
         data = modal_ctx.responses
 
-        self.BDD.addItemDaily(modal_ctx.guild_id, data["item_id"], data["item_name"], data["item_weight"])
+        self.BDD.addItemDaily(int(modal_ctx.guild_id), data["item_id"], data["item_name"], data["item_weight"])
 
         await self.lang_pack.send_message(modal_ctx, "daily_added")
 
@@ -359,11 +358,11 @@ class Shop(Extension):
         if not await self.do_everything_exists(ctx):
             return
 
-        if not self.BDD.isServerPremium(ctx.guild_id):
+        if not self.BDD.isServerPremium(int(ctx.guild_id)):
             await self.lang_pack.send_message(ctx, "server_not_premium")
             return
         
-        items = self.BDD.getDailyItemsPremium(ctx.guild_id).keys()
+        items = self.BDD.getDailyItemsPremium(int(ctx.guild_id)).keys()
 
         if len(items) == 0:
             await self.lang_pack.send_message(ctx, "no_item_daily")
@@ -380,7 +379,7 @@ class Shop(Extension):
         paginator = Paginator.create_from_embeds(self.bot, *embeds)
 
         async def remove(ctx: SlashContext):
-            id_serveur_discord = ctx.guild_id
+            id_serveur_discord = int(ctx.guild_id)
             
             self.BDD.removeItemDaily(paginator.pages[paginator.page_index].fields[1].value, id_serveur_discord)
             await self.lang_pack.send_message(ctx, "item_removed_daily")
