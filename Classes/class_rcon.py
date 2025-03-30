@@ -22,7 +22,7 @@ class Rcon:
             mcr.command("/execute as {0} run give {0} {1}".format(pseudo, id_item))
 
 
-    def getOninePlayers(self) -> list:
+    def get_online_players(self) -> list:
         try:
             with MCRcon(self.host, self.pwd, self.port) as mcr:
                 response = mcr.command("list")

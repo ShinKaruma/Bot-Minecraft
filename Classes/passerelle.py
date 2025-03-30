@@ -24,9 +24,6 @@ class Passerelle:
 
     def _execute_query(self, query, params=None):
         self.cursor.execute(query, params)
-        for i in params:
-            print("variable :", i  , sep=" ")
-            print("type :", type(i), sep=" ")
         return self.cursor.fetchone()
 
     def doDiscordExists(self, id_discord) -> bool:

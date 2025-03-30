@@ -67,7 +67,7 @@ class Shop(Extension):
             await self.lang_pack.send_message(ctx, "server_not_linked")
             return
         
-        if not self.BDD.doUserExists(id_serveur_discord=ctx.guild_id, id_user_discord=id_user_discord):
+        if not self.BDD.doUserExists(id_serveur_discord=int(ctx.guild_id), id_user_discord=id_user_discord):
             await self.lang_pack.send_message(ctx, "user_not_linked")
             return
         
