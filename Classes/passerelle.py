@@ -30,6 +30,7 @@ class Passerelle:
             self.pool = MySQLConnectionPool(
                 pool_name="crafty_pool",
                 pool_size=20,
+                pool_reset_timeout=300,
                 pool_reset_session=True,
                 host=self.config["URI"],
                 user=self.config["USER"],
@@ -43,7 +44,9 @@ class Passerelle:
     def _get_connection(self) -> bdd.MySQLConnection:
         """Récupère une connexion du pool."""
         try:
-            return self.pool.get_connection()
+            conn = self.pool.get_connection()
+            conn.ping(reconnect=True)
+            return conn
         except MySQLError as e:
             raise RuntimeError(f"Failed to get connection from pool: {e}")
 
