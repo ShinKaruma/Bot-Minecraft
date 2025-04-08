@@ -249,7 +249,7 @@ class Passerelle:
         """Ajoute un item au shop premium."""
         query = "INSERT INTO shop_premium (id_item, prix_item, id_serveur_discord, libelle) VALUES (%s, %s, %s, %s)"
         self._execute_query(query, (id_item, prix_item, int(ctx.guild_id), titre))
-        logger.info(f"addItemShop: Added item id_item={id_item}, titre={titre}, prix_item={prix_item} to id_serveur_discord={guild_id}")
+        logger.info(f"addItemShop: Added item id_item={id_item}, titre={titre}, prix_item={prix_item} to id_serveur_discord={int(ctx.guild_id)}")
 
     def removeItemShop(self, id_item: str, id_serveur_discord: int) -> None:
         """Supprime un item du shop premium."""

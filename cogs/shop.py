@@ -67,7 +67,7 @@ class Shop(Extension):
             await self.lang_pack.send_message(ctx, "server_not_linked")
             return
         
-        if not self.BDD.doUserExists(id_serveur_discord=int(ctx.guild_id), id_user_discord=id_user_discord):
+        if not self.BDD.doUserExists(id_serveur_discord=id_serveur_discord, id_user_discord=id_user_discord):
             await self.lang_pack.send_message(ctx, "user_not_linked")
             return
         
@@ -75,7 +75,7 @@ class Shop(Extension):
             await self.lang_pack.send_message(ctx, "error_coin_amount")
             return
 
-        self.BDD.addCoins(id_user_discord, int(ctx.guild_id), amount)
+        self.BDD.addCoins(id_user_discord, id_serveur_discord, amount)
         await self.lang_pack.send_message(ctx, "coins_added", player=user.mention, coins=amount)
 
     
@@ -166,7 +166,7 @@ class Shop(Extension):
             await self.lang_pack.send_message(ctx, "error_coin_amount")
             return
 
-        if self.BDD.getNbCoins(ctx.author_id, ctx.guild_id) < amount:
+        if self.BDD.getNbCoins(int(ctx.author_id), int(ctx.guild_id)) < amount:
             await self.lang_pack.send_message(ctx, "not_enough_coins")
             return
 
