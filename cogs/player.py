@@ -7,8 +7,6 @@ from Classes.lang_pack import LocalisedMessages
 from datetime import date, timedelta
 
 
-
-
 class Player(Extension):
     def __init__(self, bot):
         self.bot = bot
